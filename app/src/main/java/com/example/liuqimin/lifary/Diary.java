@@ -122,7 +122,7 @@ public class Diary {
     public String getSound(){return  sound;}
 
     public void print() {
-        Log.d("fb", "pringting diar:");
+        //Log.d("fb", "pringting diar:");
         Log.d("fb", "image: " + image);
         Log.d("fb", "id" + id);
         Log.d("fb", "date" + date);
@@ -132,6 +132,17 @@ public class Diary {
         //private byte[]img;
         //private byte[] sound;
         Log.d("fb", "sound" + sound);
+    }
+
+    public void convert(DiaryHelper d){
+        id = d.getId();
+        date = d.getDate();
+        sound =d.getSound();
+        text = d.getText();
+        image = d.getImage();
+        latitude = d.getLatitude();
+        longitude = d.getLongitude();
+        share = d.getShare();
     }
 
     public String getText(){

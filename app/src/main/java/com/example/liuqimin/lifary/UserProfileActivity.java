@@ -119,20 +119,18 @@ public class UserProfileActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if( 0==requestCode && null!=data && data.getExtras()!=null ) {
-            //產生的QRCode Image 路徑，存放在 key 為 la.droid.qr.result 的值中
             String qrcodeImgPath = data.getExtras().getString("la.droid.qr.result");
             Uri imgPath = Uri.fromFile(new File(qrcodeImgPath));
             qrCode.setImageURI(imgPath);
         }
 
         if( 1==requestCode && null!=data && data.getExtras()!=null ) {
-            //掃描結果存放在 key 為 la.droid.qr.result 的值中
             String result = data.getExtras().getString("la.droid.qr.result");
             int id = Integer.parseInt(result.toString());
             MyDBHandler dbHandler = new MyDBHandler(this, null, null, 1);
             User friend = dbHandler.findUserByID(id);
             TextView frientText = (TextView ) findViewById(R.id.friendText);
-            frientText.setText(friend.getUsername());  //將結果顯示在 TextVeiw 中
+            frientText.setText(friend.getUsername());
         }
     }
 }

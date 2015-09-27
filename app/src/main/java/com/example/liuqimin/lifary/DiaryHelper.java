@@ -83,9 +83,11 @@ public class DiaryHelper {
     public void setShare(int s){
         share = s;
     }
-    public void setDate(String d){date = d;}
-    public void setId(int i){id = i;
-        //Log.d("fb", "lat: " + id);
+    public void setDate(String d){
+        date = d;
+    }
+    public void setId(int i){
+        id = i;
     }
 
     public void convert(Diary d){
@@ -97,6 +99,51 @@ public class DiaryHelper {
         latitude = d.getLatitude();
         longitude = d.getLongitude();
         share = d.getShare();
+    }
+    public void convert(DiaryHelper d){
+        id = d.getId();
+        date = d.getDate();
+        sound =d.getSound();
+        text = d.getText();
+        image = d.getImage();
+        latitude = d.getLatitude();
+        longitude = d.getLongitude();
+        share = d.getShare();
+    }
+
+    public void past(DiaryHelper dd){
+        dd.setId(id);
+        dd.setDate(date);
+        dd.setSound(sound);
+        dd.setText(text);
+        dd.setImage(image);
+        dd.setLongitude(longitude);
+        dd.setLatitude(latitude);
+        dd.setShare(share);
+        Log.d("Lifary", "diaryhelper past done");
+    }
+
+
+    private void setLatitude(float v) {
+        latitude = v;
+    }
+
+    private void setLongitude(float v) {
+        longitude = v;
+    }
+
+    private void setImage(String s) {
+        image = s;
+    }
+
+    private void setText(String text) {
+        this.text = text;
+    }
+
+    private void setSound(String s) {
+        //Log.d("fb","sound");
+        sound = s;
+        //Log.d("fb","sound done");
     }
 
     public int getId(){ return id;}
@@ -118,5 +165,9 @@ public class DiaryHelper {
         //private byte[]img;
         //private byte[] sound;
         Log.d("fb", "sound" +sound);
+        Log.d("fb","pringting diar:");
+        Log.d("fb","pringting diar:");
+        Log.d("fb","pasdfasdfasdfasdfassdf :");
+
     }
 }

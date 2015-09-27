@@ -146,10 +146,10 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 diaryCounter = snapshot.getChildrenCount();
-                Log.d("fb", "there are " + diaryCounter + " diaries");
+                //Log.d("fb", "there are " + diaryCounter + " diaries");
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     //postSnapshot;
-                    Log.d("fb", "there are " + diaryCounter + " diaries");
+                    //Log.d("fb", "there are " + diaryCounter + " diaries");
                 }
             }
             @Override
@@ -157,6 +157,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 Log.d("fb","The read failed: " + firebaseError.getMessage());
             }
         });
+        //Log.d("fb", "@editDiary there are " + diaryCounter + " diaries");
+
     }
 
     // -------------------------- Create menu in Actionbar ----------------------------
@@ -345,14 +347,14 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 Log.d(DEBUG, "cursor failed ERROR: " + "\t" + e.getLocalizedMessage());
             }
 
-            diary.print();
+            //diary.print();
             String s = ""+(int) diaryCounter;
             Log.d("fb", "s == " + s);
             Firebase ref_diary = rootRef.child("1").child("diary").child(s);
             try {
                 DiaryHelper dh = new DiaryHelper(0);
                 dh.convert(diary);
-                dh.print();
+                //dh.print();
                 ref_diary.setValue(dh);
             }catch (Exception e){
                 Log.d("Lifary", "Online dataase ERROR: " + e.getLocalizedMessage());

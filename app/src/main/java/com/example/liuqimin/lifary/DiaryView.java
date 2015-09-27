@@ -18,6 +18,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
+
 import org.w3c.dom.Text;
 
 import java.io.File;
@@ -36,10 +41,57 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
 
     boolean isPlaying = false;
 
+    Firebase rootRef;
+    double diaryCounter = 0;
+    DiaryHelper targetPost = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_diary_view);
+
+        Log.d("Lifary", "enter onvertingasdf");
+        //-------- db setups
+        Firebase.setAndroidContext(this);
+        rootRef = new Firebase("https://kimmyblog.firebaseio.com/");
+        Firebase refA = rootRef.child("1").child("diary");
+        //refA.addValueEventListener(this);
+        //Log.d("Lifary", "diasdfasdf");
+
+        refA.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                diaryCounter = snapshot.getChildrenCount();
+                //Log.d("fb", "there are " + diaryCounter + " diaries");
+                int i = 0;
+                for (DataSnapshot postSnapshot : snapshot.getChildren()) {
+                    //postSnapshot;
+                    DiaryHelper post = postSnapshot.getValue(DiaryHelper.class);
+                    Log.d("fb", "post print: " + i);
+                    post.print();
+                    if (post.getId() == 2) {
+                        Log.d("fb", "hell no");
+                        post.past(targetPost);
+                        targetPost.print();
+                        Log.d("fb", "post print: " + i);
+                        break;
+                    }
+                    i++;
+                }
+            }
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                Log.d("fb", "The read failed: " + firebaseError.getMessage());
+            }
+        });
+
+        //Log.d("fb", "there are " + diaryCounter + " diaries");
+        targetPost.print();
+        Log.d("fb", "diao ni lao mu");
+        //Diary targetDiary = new Diary(0);
+        //targetDiary.convert(targetPost);
+        //targetDiary.print();
+        Log.d("Lifary", "diary done converting");
 
         date = (TextView) findViewById(R.id.timeTextView);
         share = (TextView) findViewById(R.id.shareTextView);
@@ -48,13 +100,12 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
         img = (ImageView) findViewById(R.id.diaryImageView);
         audioPlay = (ImageButton) findViewById(R.id.playAudioButton);
         audioPlay.setOnClickListener(this);
-
-
         diary = null;
 
         Bundle extra = getIntent().getExtras();
         if(extra != null){
             int id = extra.getInt("DIARY_ID");
+            String url = extra.getString("ajslajl");
             Log.d("Lifary", "diary get the date: id = " + id);
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
             try {
@@ -64,7 +115,6 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
                 Log.d("Lifary", "diary found ERROR: " + e.getLocalizedMessage());
             }
         }
-
         if(diary != null){
 
             date.setText(diary.getDate());      // set date

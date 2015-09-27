@@ -4,15 +4,20 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 
+public class DiaryList extends Activity implements AdapterView.OnItemClickListener {
 
-public class DiaryList extends Activity {
-
+    ListView lv;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_diary_list);
+        lv = (ListView) findViewById(R.id.dblist);
+        lv.setOnItemClickListener(this);
     }
 
     @Override
@@ -35,5 +40,10 @@ public class DiaryList extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
     }
 }
