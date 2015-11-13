@@ -3,9 +3,11 @@ package com.example.liuqimin.lifary;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,7 +32,12 @@ import java.util.Map;
  */
 public class ConnectionWithPost {
     int serverResponseCode = 0;
-    private final String upLoadServerUri = "http://192.168.1.71:8080/wala/UploadToServer.php";
+    //todo static the link
+    private final String UPLOAD_FILE_URL = "http://192.168.1.71:8080/wala/UploadToServer.php";
+    private final String UPLOAD_DIARY_URL = "http://192.168.1.71:8080/wala/upload_diary.php";
+    private final String DOWNLOAD_ALL_DIARIES_URL = "http://192.168.1.71:8080/wala/get_all_diaries.php";
+    private final String DOWNLOADL_USER_DIARIES_URL="http://192.168.1.71:8080/wala/get_diary.php";
+    private String static_url = "error";
 
     /**********  File Path *************/
     //todo change file path
@@ -47,15 +54,13 @@ public class ConnectionWithPost {
      * with Diary data as url parameter.
      * It also returns the respond message from server.
      *
-     * @param link This is a url of the target php server
      * @param values This is a HashMap<String, String> array contains data to be sent;
      *               mostly json objects
      * @return String This returns the responds from server
      */
-    public String sendRequest(String link, HashMap<String, String> values) {
-
+    public String uploadDiary( HashMap<String, String> values) {
         try {
-            URL url = new URL(link);
+            URL url = new URL(UPLOAD_DIARY_URL);
             conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(10000);
             conn.setConnectTimeout(15000);
@@ -65,12 +70,13 @@ public class ConnectionWithPost {
             conn.connect();
             if (values != null) {
                 OutputStream os = conn.getOutputStream();
-                //@todo find out about stream writer
+                //todo handle php server error
                 OutputStreamWriter osWriter = new OutputStreamWriter(os,
                         "UTF-8");
                 BufferedWriter writer = new BufferedWriter(osWriter);
                 writer.write(getPostData(values));
 
+                //System.out.println("writer: " +getPostData(values));
                 writer.flush();
                 writer.close();
                 os.close();
@@ -83,9 +89,10 @@ public class ConnectionWithPost {
                 BufferedReader reader = new BufferedReader(isReader);
 
                 String result = "";
-                String line = "";
+                String line;
                 while ((line = reader.readLine()) != null) {
                     result += line;
+                    System.out.println("Result: " + result);
                 }
 
                 if (result.trim().length() > 2) {
@@ -133,7 +140,7 @@ public class ConnectionWithPost {
      * @param sourceFileUri This is the absolute path of the file that need to be uploaded
      * @return int This is the server respond code
      */
-    public int uploadFile(String sourceFileUri) {
+    public String uploadFile(String sourceFileUri) {
 
 
         String fileName = sourceFileUri;
@@ -153,14 +160,14 @@ public class ConnectionWithPost {
 
             Log.e("uploadFile", "Source File not exist :"
                     + uploadFilePath + "" + uploadFileName);
-            return 0;
+            return "error";
         }
         else {
             try {
 
                 // open a URL connection to the Servlet
                 FileInputStream fileInputStream = new FileInputStream(sourceFile);
-                URL url = new URL(upLoadServerUri);
+                URL url = new URL(UPLOAD_FILE_URL);
 
                 // Open a HTTP  connection to  the URL
                 conn = (HttpURLConnection) url.openConnection();
@@ -203,15 +210,28 @@ public class ConnectionWithPost {
                 // Responses from the server (code and message)
                 serverResponseCode = conn.getResponseCode();
                 String serverResponseMessage = conn.getResponseMessage();
-
-                Log.i("uploadFile", "HTTP Response is : "
-                        + serverResponseMessage + ": " + serverResponseCode);
-
                 if (serverResponseCode == 200) {
                     String msg = "File Upload Completed.\n\n See uploaded file here : \n\n"
-                            +" http://www.androidexample.com/media/uploads/"
                             +uploadFileName;
-                    Log.i("uploadFile", msg);
+                    System.out.println("filepath: " + serverResponseMessage);
+
+                    InputStream is = conn.getInputStream();
+                    InputStreamReader isReader = new InputStreamReader(is, "UTF-8");
+                    BufferedReader reader = new BufferedReader(isReader);
+
+                    String result = "";
+                    String line = "";
+                    while ((line = reader.readLine()) != null) {
+                        result += line;
+                    }
+                    //System.out.println("result: " +result);
+                    if (result.trim().length() > 2) {
+                        Gson gson = new Gson();
+                        object = gson.fromJson(result, Message.class);
+                        //System.out.println("object message:" + object.getMessage());
+                    }
+                    if (object.getSuccess().equals("1"))
+                        static_url = object.getMessage();
                 }
                 //close the streams //
                 fileInputStream.close();
@@ -229,7 +249,137 @@ public class ConnectionWithPost {
                 e.printStackTrace();
             }
         }
-        return serverResponseCode;
+        return static_url;
+    }
+
+    /**
+     * This method get all diaries of the user
+     *
+     * @return Diaries a class contains arrays of Diary objects
+     * @throws IOException
+     */
+    public Diaries getAllDiaries() throws IOException {
+        //string that read in server response;
+        String tmp = "";
+        /*
+        String jsonStr = "{\"phonetype\":\"N95\",\"cat\":\"WP\"}";
+        Gson gson = new Gson();
+        String json = gson.toJson(jsonStr);
+        System.out.println(json);
+        */
+        //URL url = new URL("http://192.168.1.71:8080/wala/get_all_products.php");
+        URL url = new URL(DOWNLOAD_ALL_DIARIES_URL);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        try {
+            if (urlConnection.getResponseCode() ==urlConnection.HTTP_OK)
+                System.out.println(urlConnection.getResponseMessage());
+
+            DataInputStream dis =new DataInputStream(urlConnection.getInputStream());
+            StringBuffer inputLine = new StringBuffer();
+
+            while ((tmp = dis.readLine()) != null) {
+                inputLine.append(tmp);
+                //System.out.println(tmp);
+            }
+            String rs = inputLine.toString();
+
+            /*
+             *Using Gson builder with deserializer
+             */
+            final GsonBuilder gsonBuilder = new GsonBuilder();
+            //gsonBuilder.registerTypeAdapter(Product.class, new ProductDeserializer());
+            //gsonBuilder.registerTypeAdapter(Products.class, new ProductsDeserializer());
+
+            gsonBuilder.registerTypeAdapter(Diary.class, new DiaryDeserializer());
+            gsonBuilder.registerTypeAdapter(Diaries.class, new DiariesDeserializer());
+            final Gson gson = gsonBuilder.create();
+            //final Products products = gson.fromJson(rs, Products.class);
+            final Diaries diaries = gson.fromJson(rs, Diaries.class);
+            //System.out.println("Convert json string into object: \n" + diaries);
+            String temp_p = gson.toJson(diaries);
+            //System.out.println("Convert object into json format: \n" + temp_p);
+
+            return diaries;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * This method gets all diary under same user
+     *
+     * @param user_id This is the unique id of a user
+     * @return Diaries This is an object contains list of Diary
+     * @throws IOException
+     */
+    public Diaries getUserDiaries(int user_id) throws IOException {
+        //string that read in server response;
+        String tmp = "";
+        /*
+        String jsonStr = "{\"phonetype\":\"N95\",\"cat\":\"WP\"}";
+        Gson gson = new Gson();
+        String json = gson.toJson(jsonStr);
+        System.out.println(json);
+        */
+        //URL url = new URL("http://192.168.1.71:8080/wala/get_all_products.php");
+        URL url = new URL(DOWNLOADL_USER_DIARIES_URL);
+        conn = (HttpURLConnection) url.openConnection();
+        conn.setReadTimeout(10000);
+        conn.setConnectTimeout(15000);
+        conn.setRequestMethod("POST");
+        conn.setDoInput(true);
+        conn.setDoOutput(true);
+        conn.connect();
+        try {
+
+            /******* send parameter**/
+            OutputStream os = conn.getOutputStream();
+            //todo handle php server error
+            OutputStreamWriter osWriter = new OutputStreamWriter(os,
+                        "UTF-8");
+            BufferedWriter writer = new BufferedWriter(osWriter);
+            writer.write("id=" + user_id);
+
+            //System.out.println("writer: " +getPostData(values));
+            writer.flush();
+            writer.close();
+            os.close();
+            if (conn.getResponseCode() ==conn.HTTP_OK){
+                System.out.println(conn.getResponseMessage());
+                /******* Read server respond data *****/
+                DataInputStream dis =new DataInputStream(conn.getInputStream());
+                StringBuffer inputLine = new StringBuffer();
+
+                while ((tmp = dis.readLine()) != null) {
+                    inputLine.append(tmp);
+                    System.out.println(tmp);
+                }
+                String rs = inputLine.toString();
+
+                /*
+                 *Using Gson builder with deserializer
+                 */
+                final GsonBuilder gsonBuilder = new GsonBuilder();
+                //gsonBuilder.registerTypeAdapter(Product.class, new ProductDeserializer());
+                //gsonBuilder.registerTypeAdapter(Products.class, new ProductsDeserializer());
+
+                gsonBuilder.registerTypeAdapter(Diary.class, new DiaryDeserializer());
+                gsonBuilder.registerTypeAdapter(Diaries.class, new DiariesDeserializer());
+                final Gson gson = gsonBuilder.create();
+                //final Products products = gson.fromJson(rs, Products.class);
+                final Diaries diaries = gson.fromJson(rs, Diaries.class);
+                //System.out.println("Convert json string into object: \n" + diaries);
+                String temp_p = gson.toJson(diaries);
+                //System.out.println("Convert object into json format: \n" + temp_p);
+
+                return diaries;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -242,6 +392,12 @@ public class ConnectionWithPost {
         private String message = "";
         private String success = "";
         Message(){}
+        public String getMessage(){
+            return message;
+        }
+        public String getSuccess(){
+            return success;
+        }
         public String toString(){
             String result = "{\"success\":"+success+",\"message\":\""+message+"\"}";
             return result;
