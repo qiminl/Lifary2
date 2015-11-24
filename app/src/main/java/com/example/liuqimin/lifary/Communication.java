@@ -6,4 +6,6 @@ package com.example.liuqimin.lifary;
 public interface Communication {
 
     public void com(String contents);
+
+    public void readDiary(Diary d);
 }

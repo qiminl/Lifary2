@@ -15,28 +15,43 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.firebase.client.DataSnapshot;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.firebase.client.ValueEventListener;
+
 import org.w3c.dom.Text;
 
 import java.io.File;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 
 public class UserProfileActivity extends Activity {
 
 
     TextView usrProfile;
-    ImageView usrProtraite;
     ImageView qrCode;
     Button newDiaryButton;
     Button addFriendButton;
     User user;
+    ArrayList<User> userList;
 
+    Firebase rootRef;
+    String userID;
+    boolean isSet = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_profile);
         usrProfile = (TextView) findViewById(R.id.usernameProfileText);
         addFriendButton = (Button) findViewById(R.id.addFriendButton);
+        isSet = false;
+        userList = new ArrayList<User>();
+
+        Firebase.setAndroidContext(this);
+        rootRef = new Firebase("https://liuqimintest.firebaseio.com/");
+        // get scan function
         addFriendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,42 +68,91 @@ public class UserProfileActivity extends Activity {
             }
         });
         qrCode = (ImageView) findViewById(R.id.QRcodeImg);
-        int userID;
+
         if (savedInstanceState == null){
             Bundle extras = getIntent().getExtras();
             if(extras != null){
-                userID = extras.getInt("USER_ID");
-                MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
-                user = myDBHandler.findUserByID(userID);
-                usrProfile.setText(user.getUsername());
-            }
-        }
-        newDiaryButton = (Button) findViewById(R.id.newDiaryButton);
-        newDiaryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(getApplicationContext(), EditDiaryActivity.class);
-                startActivity(i);
-            }
-        });
+                userID = extras.getString("USER_ID");
+          //      MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
+         //       user = myDBHandler.findUserByID(userID);
+                Log.d("Lifary", "UserProfile: userID = " + userID);
 
-        try {
-            String encodeUrl = URLEncoder.encode("" + user.getID());
-            Intent i = new Intent("la.droid.qr.encode");
-            i.putExtra("la.droid.qr.code", encodeUrl);
-            i.putExtra("la.droid.qr.size", 200);
-            i.putExtra("la.droid.qr.image", true);
-            try {
-                startActivityForResult(i, 0);
-            }catch (ActivityNotFoundException ex){
-                Log.d("Lifary", "UserProfile: startActivity ERROR: " + ex.getLocalizedMessage());
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=la.droid.qr"));
-                startActivity(intent);
+                rootRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if(!isSet) {
+                            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                                Log.d("Lifary", "UserProfile: postSnapshot.getKey() = " + postSnapshot.getKey());
+                                String usr_uniqueid = (String) postSnapshot.child("uniqueid").getValue();
+                                String user_name = (String) postSnapshot.child("username").getValue();
+                                String user_password = (String) postSnapshot.child("password").getValue();
+                                int user_id = 0;
+                                User usr = new User(user_name, user_password);
+                                usr.setUniqueid(usr_uniqueid);
+                                usr.setID(user_id);
+                                userList.add(usr);
+                                if (postSnapshot.getKey().equals(userID)) {
+
+                                    Log.d("Lifary", "UserProfile: found userID");
+                                    String ur_uniqueid = (String) postSnapshot.child("uniqueid").getValue();
+                                    String uer_name = (String) postSnapshot.child("username").getValue();
+                                    String uer_password = (String) postSnapshot.child("password").getValue();
+                                    int uer_id = 0;
+                                    usr = new User(uer_name, uer_password);
+                                    usr.setUniqueid(ur_uniqueid);
+                                    usr.setID(uer_id);
+                                    user = usr;
+                                    Log.d("Lifary", "user uniqueID = " + user.getUniqueid()
+                                            + "user name = " + user.getUsername());
+                                    usrProfile.setText(user.getUsername());
+                                    newDiaryButton = (Button) findViewById(R.id.newDiaryButton);
+                                    newDiaryButton.setText("My Diaries");
+                                    newDiaryButton.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            Intent i = new Intent(getApplicationContext(), DiaryList.class);
+                                            i.putExtra("USER_ID", user.getUniqueid());
+                                            startActivity(i);
+                                        }
+                                    });
+
+                                    // Encode QRcode
+                                    try {
+                                        String encodeUrl = URLEncoder.encode(user.getUniqueid());
+                                        Intent i = new Intent("la.droid.qr.encode");
+                                        i.putExtra("la.droid.qr.code", encodeUrl);
+                                        i.putExtra("la.droid.qr.size", 200);
+                                        i.putExtra("la.droid.qr.image", true);
+                                        try {
+                                            startActivityForResult(i, 0);
+                                        }catch (ActivityNotFoundException ex){
+                                            Log.d("Lifary", "UserProfile: startActivity ERROR: " + ex.getLocalizedMessage());
+                                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=la.droid.qr"));
+                                            startActivity(intent);
+                                        }
+                                    }catch(Exception e){
+                                        Log.d("Lifary", "UserProfile: encode QRcode ERROR: " + e.getLocalizedMessage());
+
+                                    }
+
+                                } else {
+                                    Log.d("Lifary", "UserProfile: unable to find userID");
+                                }
+                            }
+                            isSet = true;
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+                        System.out.println("The read failed: " + firebaseError.getMessage());
+
+                    }
+                });
             }
-        }catch(Exception e){
-            Log.d("Lifary", "UserProfile: encode QRcode ERROR: " + e.getLocalizedMessage());
 
         }
+
 
     }
 
@@ -119,20 +183,36 @@ public class UserProfileActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if( 0==requestCode && null!=data && data.getExtras()!=null ) {
-            //產生的QRCode Image 路徑，存放在 key 為 la.droid.qr.result 的值中
+            //generates qrcode path
             String qrcodeImgPath = data.getExtras().getString("la.droid.qr.result");
             Uri imgPath = Uri.fromFile(new File(qrcodeImgPath));
             qrCode.setImageURI(imgPath);
         }
 
         if( 1==requestCode && null!=data && data.getExtras()!=null ) {
-            //掃描結果存放在 key 為 la.droid.qr.result 的值中
+            //put result in la.droid.qr.result
             String result = data.getExtras().getString("la.droid.qr.result");
-            int id = Integer.parseInt(result.toString());
-            MyDBHandler dbHandler = new MyDBHandler(this, null, null, 1);
-            User friend = dbHandler.findUserByID(id);
-            TextView frientText = (TextView ) findViewById(R.id.friendText);
-            frientText.setText(friend.getUsername());  //將結果顯示在 TextVeiw 中
+        //    MyDBHandler dbHandler = new MyDBHandler(this, null, null, 1);
+        //    User friend = dbHandler.findUserByID(id);
+            if(findUserByUsername(result) != null) {
+                User friend = findUserByUsername(result);
+                TextView frientText = (TextView) findViewById(R.id.friendText);
+                frientText.setText(friend.getUsername());
+            }else {
+
+            }
         }
+    }
+
+    public User findUserByUsername(String name){
+        if(userList !=null){
+            for (int i = 0; i < userList.size(); i++){
+                if(name.equals(userList.get(i).getUniqueid())){
+                    User u = userList.get(i);
+                    return u;
+                }
+            }
+        }
+        return null;
     }
 }

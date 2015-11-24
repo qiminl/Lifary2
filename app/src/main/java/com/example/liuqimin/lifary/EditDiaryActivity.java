@@ -50,6 +50,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     public final static int RESULT_TAKE_PHOTO = 1;
     public final static int RESULT_LOAD_IMG = 2;
 
+    String userid;
+
 
     EditText diaryText;
     ImageButton cameraButton;
@@ -88,7 +90,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
     Firebase rootRef;
 
-    double diaryCounter = 1;
+    double diaryCounter = 0;
 
 
     // --------------------- Create Activity -------------------------------------
@@ -100,6 +102,17 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
         Log.d(DEBUG, "EditDiary super created is called");
 
         setContentView(R.layout.activity_edit_diary);
+
+        userid = "0";
+        if (savedInstanceState == null) {
+            Bundle extras = getIntent().getExtras();
+            if (extras != null) {
+                userid = extras.getString("USER_ID");
+                //      MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
+                //       user = myDBHandler.findUserByID(userID);
+                Log.d("Lifary", "UserProfile: userID = " + userid);
+            }
+        }
 
         Log.d(DEBUG, "EditDiary is created");
         diaryText = (EditText) findViewById(R.id.diaryEditText);
@@ -138,15 +151,16 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             Log.d(DEBUG, "created done 3");
 
         Firebase.setAndroidContext(this);
-        rootRef = new Firebase("https://kimmyblog.firebaseio.com/");
+        rootRef = new Firebase("https://liuqimintest.firebaseio.com");
 
-        Firebase refA = rootRef.child("1").child("diary");
+        String sid =userid;
+        Firebase refA = rootRef.child(sid).child("diary");
 //Firebase refA = new Firebase("https://kimmyblog.firebaseio.com/1/");
         refA.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 diaryCounter = snapshot.getChildrenCount();
-                Log.d("fb", "there are " + diaryCounter + " diaries");
+                Log.d("asd", "there are " + diaryCounter + " diaries");
                 for (DataSnapshot postSnapshot : snapshot.getChildren()) {
                     //postSnapshot;
                     Log.d("fb", "there are " + diaryCounter + " diaries");
@@ -320,13 +334,32 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             }
 
             // set share
-            diary.setShare(shareSelect);
+            diary.setShare(shareSelect)
+
+            ;
 
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
             Log.d(DEBUG, "try add Diary");
             myDiaryDBHandler.addDiary(diary);
             Log.d(DEBUG, "diary add success!!!!~~~~");
          //   Toast.makeText(this, "diary added success!!!!", Toast.LENGTH_LONG).show();
+
+            String s = ""+(int) (diaryCounter+1);
+            Log.d("fb", "s == " + s+1);
+            String sid = userid;
+            Firebase ref_diary = rootRef.child(sid).child("diary").child(s);
+            try {
+                DiaryHelper ds = new DiaryHelper(0);
+                ds.convert(diary);
+                ds.setId((int)diaryCounter + 1);
+                ds.print();
+                ref_diary.setValue(ds);
+
+            }catch (Exception e){
+                Log.d("Lifary", "Online dataase ERROR: " + e.getLocalizedMessage());
+            }
+
+
             Log.d(DEBUG, "test 1");
             try {
                 Diary anotherDiary = myDiaryDBHandler.findDiaryByTime(diary.getDate());
@@ -334,8 +367,9 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 if(anotherDiary != null) {
                     // go to diary view activity
                     Log.d(DEBUG, "anotherDiary != null");
-                    Intent i = new Intent(this, DiaryView.class);
-                    i.putExtra("DIARY_ID", anotherDiary.getId());
+                    Intent i = new Intent(this, DiaryList.class);
+               //     i.putExtra("DIARY_ID", anotherDiary.getId());
+                    i.putExtra("USER_ID", userid);
                     startActivity(i);
                 }else{
                     Toast.makeText(this, "diary not found", Toast.LENGTH_LONG).show();
@@ -346,17 +380,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             }
 
             diary.print();
-            String s = ""+(int) diaryCounter;
-            Log.d("fb", "s == " + s);
-            Firebase ref_diary = rootRef.child("1").child("diary").child(s);
-            try {
-                DiaryHelper dh = new DiaryHelper(0);
-                dh.convert(diary);
-                dh.print();
-                ref_diary.setValue(dh);
-            }catch (Exception e){
-                Log.d("Lifary", "Online dataase ERROR: " + e.getLocalizedMessage());
-            }
+
         }
 
     }
@@ -687,5 +711,10 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     @Override
     public void com(String contents) {
         addressTextView.setText(contents);
+    }
+
+    @Override
+    public void readDiary(Diary d) {
+
     }
 }

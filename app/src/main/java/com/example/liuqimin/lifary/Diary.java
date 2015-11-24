@@ -20,8 +20,8 @@ public class Diary {
     private String text;
     private float latitude, longitude;
     private int share;
-  //  private byte[]img;
-   // private byte[] sound;
+    //  private byte[]img;
+    // private byte[] sound;
 
     private String image;
     private String sound;
@@ -38,7 +38,7 @@ public class Diary {
                 hour + ":" + minute + ":" + seconds;
 
 
-     //   img = null;
+        //   img = null;
         image = "";
         sound = "";
         text = "";
@@ -57,15 +57,19 @@ public class Diary {
     }
     public void addImage(Bitmap bmp){
 
+        Log.d("fb", " hmm?");
         byte[] img = null;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
+        Log.d("fb", " hmm?1");
         bmp.compress(Bitmap.CompressFormat.PNG, 100, os);
+        Log.d("fb", " 2");
         img = os.toByteArray();
+        Log.d("fb", "Diary: img == adding");
         if(img == null)
             image = "";
-        else    image = Base64.encodeToString(img, Base64.DEFAULT);
-
-
+        else
+            image = Base64.encodeToString(img, Base64.DEFAULT);
+        Log.d("fb", "Diary: img == " + image);
         Log.d("Lifary", "Diary: img == " + Arrays.toString(img));
 
     }
@@ -73,11 +77,11 @@ public class Diary {
         if(audioByte != null) {
             sound = Base64.encodeToString(audioByte, Base64.DEFAULT);
         }
-      //  Log.d("Lifary", "sound.size = " + sound.length);
+        //  Log.d("Lifary", "sound.size = " + sound.length);
     }
     public void setImageByByte(byte[] imgByte){
         if(imgByte != null)
-           image = Base64.encodeToString(imgByte, Base64.DEFAULT);
+            image = Base64.encodeToString(imgByte, Base64.DEFAULT);
     }
     public void setAudioByte(byte[] audioByte){
         if(audioByte != null)
@@ -96,8 +100,8 @@ public class Diary {
     public float getLatitude(){return latitude;}
     public float getLongitude(){return longitude;}
     public byte[] getImg(){
-            byte[] img = null;
-            img = Base64.decode(image,Base64.DEFAULT);
+        byte[] img = null;
+        img = Base64.decode(image,Base64.DEFAULT);
         return img;
     }
     public byte[] getAudio(){
@@ -134,8 +138,36 @@ public class Diary {
         Log.d("fb", "sound" + sound);
     }
 
+
+    public void convert(DiaryHelper d){
+        id = d.getId();
+        date = d.getDate();
+        sound =d.getSound();
+        text = d.getText();
+        image = d.getImage();
+        latitude = d.getLatitude();
+        longitude = d.getLongitude();
+        share = d.getShare();
+    }
+
+    public void convert(Diary d){
+        id = d.getId();
+        date = d.getDate();
+        sound =d.getSound();
+        text = d.getText();
+        image = d.getImage();
+        latitude = d.getLatitude();
+        longitude = d.getLongitude();
+        share = d.getShare();
+    }
     public String getText(){
         return text;
+    }
+    public void setImageByString(String s){
+        image = s;
+    }
+    public void setAudioByString(String s){
+        sound = s;
     }
 
 }

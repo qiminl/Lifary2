@@ -84,7 +84,8 @@ public class DiaryHelper {
         share = s;
     }
     public void setDate(String d){date = d;}
-    public void setId(int i){id = i;
+    public void setId(int i){
+        id = i;
         //Log.d("fb", "lat: " + id);
     }
 
@@ -99,6 +100,51 @@ public class DiaryHelper {
         share = d.getShare();
     }
 
+    public void convert(DiaryHelper d){
+        id = d.getId();
+        date = d.getDate();
+        sound =d.getSound();
+        text = d.getText();
+        image = d.getImage();
+        latitude = d.getLatitude();
+        longitude = d.getLongitude();
+        share = d.getShare();
+    }
+
+    public void past(DiaryHelper d){
+        d.setId(id);
+        d.setDate(date);
+        d.setShare(share);
+        d.setSound(sound);
+        d.setLocation(latitude, longitude);
+        d.setText (text);
+        d.setImage(image);
+        //id = d.getId();
+        //date = d.getDate();
+        //sound =d.getSound();
+        //text = d.getText();
+        //image = d.getImage();
+        //latitude = d.getLatitude();
+        //longitude = d.getLongitude();
+        //share = d.getShare();
+        Log.d("fb", "Done convert");
+    }
+
+    private void setText(String text) {
+        this.text = text;
+    }
+
+    private void setLocation(float v, float v1) {
+        longitude = v; latitude = v1;
+    }
+
+    private void setSound(String s) {
+        sound = s;
+    }
+    public void setImage(String image) {
+        this.image = image;
+    }
+
     public int getId(){ return id;}
     public String getDate(){return date;}
     public String getSound(){return sound;}
@@ -108,7 +154,7 @@ public class DiaryHelper {
     public float getLongitude(){return longitude;}
     public int getShare(){return share;}
     public void print(){
-        Log.d("fb","pringting diar:");
+        Log.d("fb","pringting diar in diary helper:");
         Log.d("fb", "image: " + image);
         Log.d("fb", "id" +id);
         Log.d("fb", "date" +date);
@@ -119,4 +165,6 @@ public class DiaryHelper {
         //private byte[] sound;
         Log.d("fb", "sound" +sound);
     }
+
+
 }

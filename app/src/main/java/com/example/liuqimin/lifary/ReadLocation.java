@@ -42,6 +42,10 @@ public class ReadLocation {
 
         Log.d("Lifary", "ReadLocation 4");
     }
+    public ReadLocation(Context c){
+        con = c;
+        com = null;
+    }
 
 
 
@@ -53,6 +57,13 @@ public class ReadLocation {
                 lon +
                 "&username=demo");
 
+    }
+
+    public void readDiary(String url) {
+        Log.d("Lab11", "buttonGetWeater");
+        ReadDiaryJSONDataTask r = new ReadDiaryJSONDataTask();
+        String surl = url + String.format(".json?orderedBy=id\"print=pretty");
+        r.execute(url + ".json?orderedBy=\"id\"print=pretty");
     }
 
 
@@ -132,6 +143,7 @@ public class ReadLocation {
         return new String(buffer);
     }
 
+
     private class ReadlocationJSONDataTask extends AsyncTask<String, Void, String> {
 
 
@@ -180,6 +192,75 @@ public class ReadLocation {
                         Log.d("Lab11", "ERROR: " + err.getLocalizedMessage());
                     }
                 }
+            }
+        }
+
+    }
+
+
+    private class ReadDiaryJSONDataTask extends AsyncTask<String, Void, String> {
+
+
+        Exception exception = null;
+
+        Diary diary;
+
+        public Diary getDiary(){
+            return diary;
+        }
+
+        protected String doInBackground(String... urls) {
+            Log.d("Lab11", "doInBackground");
+            Log.d("Lab11", "location url = " + urls[0]);
+            try{
+                String JSONResult = readJSONData(urls[0]);
+                //   Log.d("Lab11", "JSONResult = " + JSONResult);
+
+                return JSONResult;
+            }catch(IOException e){
+                exception = e;
+            }
+            return null;
+        }
+
+        protected void onPostExecute(String result) {
+
+
+            //    Log.d("Lab11", "onPostExecute result = " + result);
+            try {
+
+                diary = new Diary(0);
+
+                Log.d("Lab11", "jsonObject");
+                JSONObject jsonObject = new JSONObject(result);
+                Log.d("Lab11", "weatherObservationItems");
+
+                String dateItem = jsonObject.getString("date");
+                diary.setDate(dateItem);
+                Log.d("Lifary", "ReadLocation: diary date = " + dateItem);
+                int idItem = jsonObject.getInt("id");
+                diary.setId(idItem);
+                Log.d("Lifary", "ReadLocation: diary id = " + diary.getId());
+
+                String imageItem = jsonObject.getString("image");
+                Log.d("Lifary", "ReadLocation: imageItem = " + imageItem);
+
+                diary.setImageByString(imageItem);
+                Log.d("Lifary", "ReadLocation: diary image = " + diary.getImage());
+
+                float lat = (float) jsonObject.getDouble("latitude");
+                float lon = (float) jsonObject.getDouble("longitude");
+                diary.addLocation(lat, lon);
+                int shareItem = jsonObject.getInt("share");
+                diary.setShare(shareItem);
+                String au = jsonObject.getString("sound");
+                diary.setAudioByString(au);
+                diary.addContents(jsonObject.getString("text"));
+                com.readDiary(diary);
+
+                Log.d("Lifary", "ReadLocation: diary Added, diary text = " + diary.getText() );
+            } catch (Exception e) {
+                Log.d("Lifary", "Readocation: read diary ERROR: " + e.getLocalizedMessage());
             }
         }
 

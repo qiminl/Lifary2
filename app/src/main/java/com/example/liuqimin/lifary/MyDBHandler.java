@@ -19,6 +19,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
     private static final String TABLE_USERS = "users";
 
     public static final String COLUMN_ID = "_id";
+    public static final String COLUMN_UNIQUE_ID = "uniqueid";
     public static final String COLUMN_USERNAME = "username";
     public static final String COLUMN_PASSWORD = "password";
 
@@ -32,8 +33,8 @@ public class MyDBHandler extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_PRODUCTS_TABLE = "CREATE TABLE " +
                 TABLE_USERS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY," + COLUMN_USERNAME
-                + " TEXT," + COLUMN_PASSWORD + " TEXT" + ")";
+                + COLUMN_ID + " INTEGER PRIMARY KEY,"
+                + COLUMN_UNIQUE_ID + "TEXT" + COLUMN_USERNAME + " TEXT," + COLUMN_PASSWORD + " TEXT" + ")";
         db.execSQL(CREATE_PRODUCTS_TABLE);
         Log.d(DEBUG, "onCreate is called");
 
@@ -52,6 +53,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(COLUMN_USERNAME, user.getUsername());
         values.put(COLUMN_PASSWORD, user.getPassword());
+        values.put(COLUMN_UNIQUE_ID, user.getUniqueid());
 
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -59,7 +61,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-    public User findUser(String username) {
+    public User findUserByUsername(String username) {
         String query = "Select * FROM " + TABLE_USERS + " WHERE " + COLUMN_USERNAME + " =  \"" + username + "\"";
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -71,8 +73,9 @@ public class MyDBHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             cursor.moveToFirst();
             user.setID(Integer.parseInt(cursor.getString(0)));
-            user.setUsername(cursor.getString(1));
-            user.setPassword(cursor.getString(2));
+            user.setUniqueid(cursor.getString(1));
+            user.setUsername(cursor.getString(2));
+            user.setPassword(cursor.getString(3));
             cursor.close();
         } else {
             user = null;
@@ -93,8 +96,9 @@ public class MyDBHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             cursor.moveToFirst();
             user.setID(Integer.parseInt(cursor.getString(0)));
-            user.setUsername(cursor.getString(1));
-            user.setPassword(cursor.getString(2));
+            user.setUniqueid(cursor.getString(1));
+            user.setUsername(cursor.getString(2));
+            user.setPassword(cursor.getString(3));
             cursor.close();
         } else {
             user = null;

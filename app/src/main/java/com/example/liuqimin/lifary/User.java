@@ -6,6 +6,7 @@ package com.example.liuqimin.lifary;
 public class User {
 
     private int _id;
+    private String _uniqueid;
     private String _username;
     private String _password;
 
@@ -16,11 +17,15 @@ public class User {
         _password = password;
 
     }
-    public User(int id, String username, String password){
+    public User(int id, String uniqueid, String username, String password){
         _id = id;
         _username = username;
         _password = password;
+        _uniqueid = uniqueid;
     }
+
+    public void setUniqueid(String s){_uniqueid = s;}
+    public String getUniqueid(){return _uniqueid;}
 
     public void setID(int id){
         _id = id;
