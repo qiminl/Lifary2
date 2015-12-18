@@ -6,26 +6,28 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 
 /**
+ * This is a class operates on Diary
  * Created by liuqimin on 15-07-07.
  */
 public class Diary {
 
-    private int id;
+    private String id;
     private String date;
     private String text;
     private float latitude, longitude;
     private int share;
   //  private byte[]img;
    // private byte[] sound;
-
     private String image;
+    private String imageurl;
     private String sound;
+    private String userid;
 
+    //todo modify init stat - create a method to full init with content
     public Diary(int a){
         Calendar c= Calendar.getInstance();
         int seconds = c.get(Calendar.SECOND);
@@ -40,20 +42,50 @@ public class Diary {
 
      //   img = null;
         image = "";
+        imageurl = "a";
         sound = "";
-        text = "";
+        text = "a";
         latitude = 0;
         longitude = 0;
         share = 0;
-
+        userid = "";
     }
+    public Diary(String a){
+        Calendar c= Calendar.getInstance();
+        int seconds = c.get(Calendar.SECOND);
+        int minute = c.get(Calendar.MINUTE);
+        int hour = c.get(Calendar.HOUR);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+        int month = c.get(Calendar.MONTH);
+        int year = c.get(Calendar.YEAR);
+        date = month + "-" + day + "-" + year + "  " +
+                hour + ":" + minute + ":" + seconds;
+
+        this.id = a;
+        //   img = null;
+        image = "";
+        imageurl = "a";
+        sound = "";
+        text = "a";
+        latitude = 0;
+        longitude = 0;
+        share = 0;
+        userid = "";
+    }
+
+
     public void addContents(String contents){
         text = contents;
     }
-
     public void addLocation(float lat, float lon){
         latitude = lat;
         longitude = lon;
+    }
+    public void setImage(String image){
+        this.image = image;
+    }
+    public void setSound(String sound){
+        this.sound = sound;
     }
     public void addImage(Bitmap bmp){
 
@@ -64,10 +96,7 @@ public class Diary {
         if(img == null)
             image = "";
         else    image = Base64.encodeToString(img, Base64.DEFAULT);
-
-
-        Log.d("Lifary", "Diary: img == " + Arrays.toString(img));
-
+        //Log.d("Lifary", "Diary: img == " + Arrays.toString(img));
     }
     public void addSound(byte[] audioByte){
         if(audioByte != null) {
@@ -83,18 +112,35 @@ public class Diary {
         if(audioByte != null)
             sound = Base64.encodeToString(audioByte, Base64.DEFAULT);
     }
-
+    public void setImageUrl(String url){
+        imageurl = url;
+    }
     public void setShare(int s){
         share = s;
     }
-    public void setDate(String d){date = d;}
+    public void setDate(String date){this.date = date;}
+    public void setDate(){
+        Calendar c= Calendar.getInstance();
+        int seconds = c.get(Calendar.SECOND);
+        int minute = c.get(Calendar.MINUTE);
+        int hour = c.get(Calendar.HOUR);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+        int month = c.get(Calendar.MONTH);
+        int year = c.get(Calendar.YEAR);
+        date = month + "-" + day + "-" + year + "  " +
+                hour + ":" + minute + ":" + seconds;
+    }
+    public void setId(double i){this.id = Double.toString(i);}
+    public void setId(String i){this.id =i;}
+    public void setUserid(String diaryid){this.userid = diaryid;}
 
-    public void setId(int i){this.id = i;}
-    public int getId(){ return id;}
+
+    public double getId(){ return Double.parseDouble(this.id);}
     public String getDate(){return date;}
     public String getContent(){return text;}
     public float getLatitude(){return latitude;}
     public float getLongitude(){return longitude;}
+    public int getShare(){return share;}
     public byte[] getImg(){
             byte[] img = null;
             img = Base64.decode(image,Base64.DEFAULT);
@@ -105,9 +151,7 @@ public class Diary {
         soundByte = Base64.decode(sound,Base64.DEFAULT);
         return soundByte;
     }
-    public int getShare(){return share;}
     public Bitmap getImgBitmap(){
-
         byte[] img = getImg();
         BitmapFactory.Options options = new BitmapFactory.Options();
         Log.d("Lifary", "Diary: img.size === " + img.length);
@@ -117,10 +161,10 @@ public class Diary {
 
         return bitmap;
     }
-
+    public String getImageUrl(){ return imageurl;}
     public String getImage(){return image;}
     public String getSound(){return  sound;}
-
+    public String getUserid(){return userid;}
     public void print() {
         //Log.d("fb", "pringting diar:");
         Log.d("fb", "image: " + image);
@@ -132,10 +176,12 @@ public class Diary {
         //private byte[]img;
         //private byte[] sound;
         Log.d("fb", "sound" + sound);
+        System.out.println("id:" + id);
+        System.out.println("imageurl:"+ imageurl);
     }
 
     public void convert(DiaryHelper d){
-        id = d.getId();
+        id = Double.toString(d.getId());
         date = d.getDate();
         sound =d.getSound();
         text = d.getText();
@@ -145,6 +191,25 @@ public class Diary {
         share = d.getShare();
     }
 
+    public HashMap<String, String> toHashMap(){
+        HashMap<String, String> map = new HashMap<>();
+
+        Log.d("fb","hashmap");
+        //@todo more thoughts on diary id's uniqueness
+        //map.put("id", Double.toString(this.id));
+        map.put("id",this.id);
+        map.put("date", this.date);
+        map.put("text", this.text);
+        map.put("latitude", Float.toString(this.latitude));
+        map.put("longitude", Float.toString(this.longitude));
+        map.put("share",Integer.toString(this.share));
+        map.put("image", this.image);
+        map.put("imageurl", this.imageurl);
+        map.put("sound", this.sound);
+        map.put("userid",this.userid);
+        Log.d("fb", "hash done");
+        return map;
+    }
     public String getText(){
         return text;
     }

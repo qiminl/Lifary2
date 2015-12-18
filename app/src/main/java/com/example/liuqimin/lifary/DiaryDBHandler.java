@@ -25,9 +25,11 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_LONGITUDE = "longitude";
     public static final String COLUMN_SHARE = "share";
     public static final String COLUMN_IMAGE = "img";
+    public static final String COLUMN_IMAGE_URL = "imgurl";
 
     public static final String COLUMN_SOUND = "sound";
     public static final String COLUMN_DATE = "date";
+    public static final String COLUMN_USERID = "userid";
 
     /*
     * diary:
@@ -37,11 +39,18 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
     * */
 
 
+    public DiaryDBHandler(Context context){
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        System.out.println("context: " + context.toString());
+
+    }
+
     public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
 
-    public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler) {
+    public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory,
+                          int version, DatabaseErrorHandler errorHandler) {
         super(context, name, factory, version, errorHandler);
     }
 
@@ -50,9 +59,10 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
 
         String CREATE_PRODUCTS_TABLE = "CREATE TABLE " +
                 TABLE_NAME + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY," + COLUMN_TEXT
-                + " TEXT," + COLUMN_LATITUDE + " REAL, " + COLUMN_LONGITUDE
-                +" REAL,"+ COLUMN_SHARE + " INTEGER," + COLUMN_DATE + " Text, "+ COLUMN_IMAGE+" BLOB,"+ COLUMN_SOUND + " BLOB " +")";
+                + COLUMN_ID + " INTEGER PRIMARY KEY," + COLUMN_TEXT+ " TEXT,"
+                + COLUMN_USERID + " TEXT, "+COLUMN_LATITUDE + " REAL, " + COLUMN_LONGITUDE
+                +" REAL,"+ COLUMN_SHARE + " INTEGER," + COLUMN_DATE + " TEXT, "
+                + COLUMN_IMAGE_URL +" TEXT,"+ COLUMN_IMAGE+" BLOB,"+ COLUMN_SOUND + " BLOB " +")";
         db.execSQL(CREATE_PRODUCTS_TABLE);
     }
 
@@ -62,20 +72,28 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-   public void addDiary(Diary diary){
+   public long addDiary(Diary diary){
        ContentValues values = new ContentValues();
+       values.put(COLUMN_ID, diary.getId());
+       values.put(COLUMN_USERID,diary.getUserid());
        values.put(COLUMN_DATE, diary.getDate());
        values.put(COLUMN_TEXT, diary.getContent());
        values.put(COLUMN_IMAGE, diary.getImg());
+       values.put(COLUMN_IMAGE_URL, diary.getImageUrl());
        values.put(COLUMN_SOUND, diary.getAudio());
        values.put(COLUMN_LATITUDE, diary.getLatitude());
        values.put(COLUMN_LONGITUDE, diary.getLongitude());
        values.put(COLUMN_SHARE, diary.getShare());
 
+       long newRowId;
        SQLiteDatabase db = this.getWritableDatabase();
-       db.insert(TABLE_NAME, null, values);
-       db.close();
+       //System.out.println("db path: " + db.getPath());
+
+       newRowId  = db.insert(TABLE_NAME, null, values);
+       System.out.println("row id = " + newRowId);
+       //db.close();
        Log.d("Lifary", "Diary Database added");
+       return newRowId;
    }
 
     public Diary findDiaryByID(int id){
@@ -155,7 +173,7 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
         return diary;
     }
 
-    public  boolean deleteDiary(int id){
+    public boolean deleteDiary(int id){
        boolean result = false;
         String query = "Select * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " =  \"" + id + "\"";
 

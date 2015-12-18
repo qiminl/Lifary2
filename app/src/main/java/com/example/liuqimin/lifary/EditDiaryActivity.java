@@ -2,6 +2,7 @@ package com.example.liuqimin.lifary;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,10 +14,10 @@ import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.print.PrintHelper;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -41,7 +42,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
 
 
 public class EditDiaryActivity extends Activity implements View.OnClickListener, Communication{
@@ -49,7 +53,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     public final static String DEBUG = "Lifary";
     public final static int RESULT_TAKE_PHOTO = 1;
     public final static int RESULT_LOAD_IMG = 2;
-
+    private SessionManager session;
+    Diary d;
 
     EditText diaryText;
     ImageButton cameraButton;
@@ -63,9 +68,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     TextView shareStatusTextView;
     Button submitButton;
 
-
-
     Bitmap bitmap;
+    private ProgressDialog pDialog;
     private static String mFileName = null;
     String imgDecodableString;
 
@@ -89,6 +93,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     Firebase rootRef;
 
     double diaryCounter = 1;
+    private boolean flag = false;
 
 
     // --------------------- Create Activity -------------------------------------
@@ -97,6 +102,9 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
         Log.d(DEBUG, "EditDiary created is called");
 
         super.onCreate(savedInstanceState);
+
+        // user control
+        session  = new SessionManager(getApplicationContext());
         Log.d(DEBUG, "EditDiary super created is called");
 
         setContentView(R.layout.activity_edit_diary);
@@ -132,16 +140,14 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
             Log.d(DEBUG, "created done1");
             Communication cc = (Communication) this;
-
             Log.d(DEBUG, "created done 2");
             readLocation = new ReadLocation(this, cc);
             Log.d(DEBUG, "created done 3");
 
         Firebase.setAndroidContext(this);
         rootRef = new Firebase("https://kimmyblog.firebaseio.com/");
-
         Firebase refA = rootRef.child("1").child("diary");
-//Firebase refA = new Firebase("https://kimmyblog.firebaseio.com/1/");
+        //Firebase refA = new Firebase("https://kimmyblog.firebaseio.com/1/");
         refA.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
@@ -189,7 +195,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     @Override
     public void onClick(View v) {
 
-
         // ---------------------- Camera Button ------------------------------------------
         if(v ==  cameraButton){
             Log.d("Lifary", "cameraButton is clicked");
@@ -202,7 +207,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             cameraButton.setImageResource(R.drawable.camera);
             bitmap =null;
 
-
             // ------------- Record Sound Button -------------------------------------------
         }else if(v == soundButton){
             Log.d("Lifary", "soundButton clicked");
@@ -214,7 +218,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                     stopRecording();
                 }
             }
-
 
             // -------------------- play Audio Button -----------------------------------------------
         }else if(v == playButton){
@@ -274,7 +277,19 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
             // add location
             diary.addLocation(latitude, longtitude);
+            Calendar c= Calendar.getInstance();
+            Log.d(DEBUG, "test -3");
+            double date =  c.get(Calendar.SECOND)+ c.get(Calendar.MINUTE)*60+c.get(Calendar.HOUR)*3600
+                    +c.get(Calendar.DAY_OF_MONTH)*3600*24 +  c.get(Calendar.MONTH)*3600*24*30
+                    + c.get(Calendar.YEAR)*3600*24*30*12;
+            Log.d(DEBUG, "test -2.5: " + session.get_uniqe_id());
+            Log.d(DEBUG, "test -2.5: " + date);
+            //todo convert unique id into data
+            //double base = Double.parseDouble(session.get_uniqe_id());
 
+            Log.d(DEBUG, "test -2.75");
+            diary.setId(date);
+            Log.d(DEBUG, "test -2");
             // convert audio file to byte[]
             try{
                 FileInputStream is = new FileInputStream(mFileName);
@@ -301,14 +316,14 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             }
 
             // add img
-
+            Log.d(DEBUG, "test -1");
             try{
                 if(bitmap == null){
 
                     Log.d("Lifary", "image bitmap ===== null");
                 }
                 else {
-                    Log.d("Lifary", "bitmap != null");
+                    //Log.d("Lifary", "bitmap != null");
                     diary.addImage(bitmap);
 
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -321,14 +336,22 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 Log.d("Lifary", "Image load ERROR: " + e.getLocalizedMessage());
             }
 
+            Log.d(DEBUG, "test 0");
             // set share
             diary.setShare(shareSelect);
+            Log.d(DEBUG, "test set userid");
+            diary.setUserid(session.get_uniqe_id());
 
+            //todo figure out local db settings
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
-            Log.d(DEBUG, "try add Diary");
+            //Log.d(DEBUG, "try add Diary");
+            Log.d("http", "Diary db created");
             myDiaryDBHandler.addDiary(diary);
-            Log.d(DEBUG, "diary add success!!!!~~~~");
+            Log.d("http", "Diary db added");
+            //Log.d(DEBUG, "diary add success!!!!~~~~");
          //   Toast.makeText(this, "diary added success!!!!", Toast.LENGTH_LONG).show();
+            //not sure .. later
+            /*
             Log.d(DEBUG, "test 1");
             try {
                 Diary anotherDiary = myDiaryDBHandler.findDiaryByTime(diary.getDate());
@@ -345,6 +368,28 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             }catch (Exception e){
                 e.printStackTrace();
                 Log.d(DEBUG, "cursor failed ERROR: " + "\t" + e.getLocalizedMessage());
+            }*/
+
+            diary.print();
+            d = diary;
+
+            Log.d("http", "start connection" );
+            String response = " ";
+            new uploadDiary().execute(response, response, response);
+
+            if (response == "success" || flag == true) {
+                Log.d("http", "connection fine");
+
+                Toast.makeText(this, "Upload Finished!",
+                        Toast.LENGTH_LONG).show();
+
+                Intent intent = new Intent(EditDiaryActivity.this,
+                        UserProfileActivity.class);
+                startActivity(intent);
+                finish();
+            }
+            else if(response == "failed" || flag == false) {
+                Log.d("http", "connection nooooo wut?");
             }
 
             //diary.print();
@@ -690,4 +735,63 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     public void com(String contents) {
         addressTextView.setText(contents);
     }
+
+    private class uploadDiary extends AsyncTask<String, String, String> {
+        HttpURLConnection urlc;
+        int result = -1;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            /*
+            pDialog = new ProgressDialog(EditDiaryActivity.this);
+            pDialog.setMessage("Loading products. Please wait...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();*/
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            Log.d("http", "test 3");
+            try {
+                ConnectionWithPost con = new ConnectionWithPost();
+                HashMap<String, String> map = d.toHashMap();
+                //Log.d("http", map.toString());
+                //todo make it static
+                //String url = "http://192.168.1.71:8000/wala/upload_diary.php";
+                String url = getString(R.string.UPLOAD_DIARY_URL);
+                String respond = con.uploadDiary(map,url );
+
+                Log.d("http", "respond:  " + respond);
+                flag = true;
+
+                //@todo try toasting a success message
+                Intent intent = new Intent(EditDiaryActivity.this,
+                        UserProfileActivity.class);
+                startActivity(intent);
+                finish();
+                return "success";
+            }catch (Exception e){
+                e.printStackTrace();
+                Log.d("http","CONNECTION ERROR: " + "\t" + e.getLocalizedMessage());
+            }
+            flag = false;
+            return "failed";
+        }
+
+        //todo add progress bar
+        /**
+         * After completing background task Dismiss the progress dialog
+         * **/
+        protected void onPostExecute(String file_url) {
+            // dismiss the dialog after getting all products
+           // pDialog.dismiss();
+        }
+        protected void onPostExecute(Long result) {
+        }
+
+    }
+
+
 }

@@ -1,12 +1,29 @@
 package com.example.liuqimin.lifary;
 
 /**
+ * Object Class contains Diary array and server responds structure
  * Created by liuqi on 2015-10-31.
  */
 public class Diaries {
     private Diary[] diaries;
+    private String success;
+    private String message;
+
+    public Diary[] loadDiaries(){ return this.diaries;}
+
+    public Diary loadDiaries(int id){
+        for (Diary result : diaries){
+            if (result.getId() == id){
+                return result;
+            }
+        }
+        return null;
+    }
 
     public void setProducts (Diary[] diaries){this.diaries = diaries;}
+    public void setResponds (String success, String message){this.message = message; this.success = success;}
+
+    public String getResponds(){return "success: " + this.success + "\nmeesge: " +this.message;}
     @Override
     public String toString (){
         String results = "";

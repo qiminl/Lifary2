@@ -1,13 +1,10 @@
 package com.example.liuqimin.lifary;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 import java.util.Calendar;
 
 /**
@@ -15,7 +12,7 @@ import java.util.Calendar;
  */
 public class DiaryHelper {
 
-    private int id;
+    private double id;
     private String date;
     private String text;
     private float latitude, longitude;
@@ -86,7 +83,7 @@ public class DiaryHelper {
     public void setDate(String d){
         date = d;
     }
-    public void setId(int i){
+    public void setId(double i){
         id = i;
     }
 
@@ -146,7 +143,7 @@ public class DiaryHelper {
         //Log.d("fb","sound done");
     }
 
-    public int getId(){ return id;}
+    public double getId(){ return id;}
     public String getDate(){return date;}
     public String getSound(){return sound;}
     public String getText(){return text;}

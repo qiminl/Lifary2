@@ -4,9 +4,8 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,8 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -30,10 +27,16 @@ public class UserProfileActivity extends Activity {
     Button newDiaryButton;
     Button addFriendButton;
     User user;
-
+    private SessionManager session;
+    MyDBHandler myDBHandler;
+    DiaryDBHandler diaryDBHandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        session = new SessionManager(getApplicationContext());
+
+        diaryDBHandler = new DiaryDBHandler(this, null, null, 1);
+
         setContentView(R.layout.activity_user_profile);
         usrProfile = (TextView) findViewById(R.id.usernameProfileText);
         addFriendButton = (Button) findViewById(R.id.addFriendButton);
@@ -58,11 +61,15 @@ public class UserProfileActivity extends Activity {
             Bundle extras = getIntent().getExtras();
             if(extras != null){
                 userID = extras.getInt("USER_ID");
-                MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
+                myDBHandler = new MyDBHandler(this, null, null, 1);
                 user = myDBHandler.findUserByID(userID);
                 usrProfile.setText(user.getUsername());
             }
         }
+        String va = "";
+        Log.d("http","trying to get all diaries");
+        new get_diaries().execute(va,va,va);
+        Log.d("http","get all diaries done");
         newDiaryButton = (Button) findViewById(R.id.newDiaryButton);
         newDiaryButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -131,6 +138,27 @@ public class UserProfileActivity extends Activity {
             User friend = dbHandler.findUserByID(id);
             TextView frientText = (TextView ) findViewById(R.id.friendText);
             frientText.setText(friend.getUsername());
+        }
+    }
+
+    private class get_diaries extends AsyncTask<String, String, String>{
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ConnectionWithPost con = new ConnectionWithPost();
+                Diaries diaries = con.getUserDiaries(session.get_uniqe_id());
+                Diary diary[] = diaries.loadDiaries();
+                for (Diary result : diary){
+                    diaryDBHandler.addDiary(result);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+
+                //todo handle error
+                Log.d("http", "CONNECTION ERROR during get all diaries:  " + "\t" + e.getLocalizedMessage());
+            }
+            return null;
         }
     }
 }

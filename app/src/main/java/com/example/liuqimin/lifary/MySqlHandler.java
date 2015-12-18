@@ -39,9 +39,10 @@ public class MySqlHandler {
                     if (!error) {
                         // user successfully logged in
                         // Create login session
-                        session.setLogin(true);
+                        //todo this session might have been abandoned
+                        session.setLogin(true, "1");
 
-                    // Now store the user in SQLite
+                        // Now store the user in SQLite
                         String uid = jObj.getString("uid");
 
                         JSONObject user = jObj.getJSONObject("user");

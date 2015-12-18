@@ -2,17 +2,14 @@ package com.example.liuqimin.lifary;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.media.MediaPlayer;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -22,8 +19,6 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -87,11 +82,9 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
 
         //Log.d("fb", "there are " + diaryCounter + " diaries");
         targetPost.print();
-        Log.d("fb", "diao ni lao mu");
         //Diary targetDiary = new Diary(0);
         //targetDiary.convert(targetPost);
         //targetDiary.print();
-        Log.d("Lifary", "diary done converting");
 
         date = (TextView) findViewById(R.id.timeTextView);
         share = (TextView) findViewById(R.id.shareTextView);

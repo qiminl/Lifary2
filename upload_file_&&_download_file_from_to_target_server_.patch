@@ -1,0 +1,1970 @@
+Index: app/src/main/java/com/example/liuqimin/lifary/Diaries.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/Diaries.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/Diaries.java	(revision )
+@@ -0,0 +1,18 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-31.
++ */
++public class Diaries {
++    private Diary[] diaries;
++
++    public void setProducts (Diary[] diaries){this.diaries = diaries;}
++    @Override
++    public String toString (){
++        String results = "";
++        for (Diary diary:diaries) {
++            results = results+"\n"+diary.toString();
++        }
++        return results;
++    }
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/ProductsDeserializer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/ProductsDeserializer.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/ProductsDeserializer.java	(revision )
+@@ -0,0 +1,29 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-29.
++ */
++
++
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++
++import java.lang.reflect.Type;
++
++
++public class ProductsDeserializer implements JsonDeserializer<Products>{
++    @Override
++    public Products deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
++            throws JsonParseException {
++        final JsonObject jsonObject = json.getAsJsonObject();
++
++        Product[] product = context.deserialize(jsonObject.get("products"), Product[].class);
++
++        final Products products = new Products();
++        products.setProducts(product);
++        return products;
++    }
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/ConnectionWithPost.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/ConnectionWithPost.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/ConnectionWithPost.java	(revision )
+@@ -0,0 +1,251 @@
++package com.example.liuqimin.lifary;
++
++import android.util.Log;
++
++import com.google.gson.Gson;
++
++import java.io.BufferedReader;
++import java.io.BufferedWriter;
++import java.io.DataOutputStream;
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileNotFoundException;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.InputStreamReader;
++import java.io.OutputStream;
++import java.io.OutputStreamWriter;
++import java.io.UnsupportedEncodingException;
++import java.net.HttpURLConnection;
++import java.net.MalformedURLException;
++import java.net.ProtocolException;
++import java.net.URL;
++import java.net.URLEncoder;
++import java.util.HashMap;
++import java.util.Map;
++
++/**
++ * This class handle HTTP POST request with data to be sent to server
++ * Created by liuqi on 2015-11-11.
++ */
++public class ConnectionWithPost {
++    int serverResponseCode = 0;
++    private final String upLoadServerUri = "http://192.168.1.71:8080/wala/UploadToServer.php";
++
++    /**********  File Path *************/
++    //todo change file path
++    //final String uploadFilePath = "/mnt/sdcard/";
++    private final String uploadFilePath = "C:\\Users\\liuqi\\Desktop\\";
++    private final String uploadFileName = "2.png";
++
++    /**********  Responds *************/
++    private HttpURLConnection conn;
++    Message object = null;
++
++    /**
++     * This method is used to send HTTP POST request to target php server
++     * with Diary data as url parameter.
++     * It also returns the respond message from server.
++     *
++     * @param link This is a url of the target php server
++     * @param values This is a HashMap<String, String> array contains data to be sent;
++     *               mostly json objects
++     * @return String This returns the responds from server
++     */
++    public String sendRequest(String link, HashMap<String, String> values) {
++
++        try {
++            URL url = new URL(link);
++            conn = (HttpURLConnection) url.openConnection();
++            conn.setReadTimeout(10000);
++            conn.setConnectTimeout(15000);
++            conn.setRequestMethod("POST");
++            conn.setDoInput(true);
++            conn.setDoOutput(true);
++            conn.connect();
++            if (values != null) {
++                OutputStream os = conn.getOutputStream();
++                //@todo find out about stream writer
++                OutputStreamWriter osWriter = new OutputStreamWriter(os,
++                        "UTF-8");
++                BufferedWriter writer = new BufferedWriter(osWriter);
++                writer.write(getPostData(values));
++
++                writer.flush();
++                writer.close();
++                os.close();
++            }
++
++            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
++                System.out.println("connect http ok");
++                InputStream is = conn.getInputStream();
++                InputStreamReader isReader = new InputStreamReader(is, "UTF-8");
++                BufferedReader reader = new BufferedReader(isReader);
++
++                String result = "";
++                String line = "";
++                while ((line = reader.readLine()) != null) {
++                    result += line;
++                }
++
++                if (result.trim().length() > 2) {
++                    Gson gson = new Gson();
++                    object = gson.fromJson(result, Message.class);
++                }
++            }
++
++        } catch (MalformedURLException e) {
++        } catch (IOException e) {
++        }
++        return object.toString();
++    }
++
++    /**
++     * This method convert HashMap data to be sent into url parameter structure.
++     *
++     * @param values This is a HashMap<String, String> stores data using in POST request
++     * @return String This is a String contains the parameter of url POST request
++     */
++    private String getPostData(HashMap<String, String> values) {
++        StringBuilder builder = new StringBuilder();
++        boolean first = true;
++        for (Map.Entry<String, String> entry : values.entrySet()) {
++            if (first)
++                first = false;
++            else
++                builder.append("&");
++
++            try {
++                builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
++                builder.append("=");
++                builder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
++            } catch (UnsupportedEncodingException e) {
++            }
++
++        }
++        return builder.toString();
++    }
++
++
++    /**
++     * This is a method that uploads file to target server location.
++     *
++     * @param sourceFileUri This is the absolute path of the file that need to be uploaded
++     * @return int This is the server respond code
++     */
++    public int uploadFile(String sourceFileUri) {
++
++
++        String fileName = sourceFileUri;
++
++        HttpURLConnection conn = null;
++        DataOutputStream dos = null;
++        String lineEnd = "\r\n";
++        String twoHyphens = "--";
++        String boundary = "*****";
++        int bytesRead, bytesAvailable, bufferSize;
++        byte[] buffer;
++        int maxBufferSize = 1 * 1024 * 1024;
++        File sourceFile = new File(sourceFileUri);
++
++        /********** Test for file existence *********/
++        if (!sourceFile.isFile()) {
++
++            Log.e("uploadFile", "Source File not exist :"
++                    + uploadFilePath + "" + uploadFileName);
++            return 0;
++        }
++        else {
++            try {
++
++                // open a URL connection to the Servlet
++                FileInputStream fileInputStream = new FileInputStream(sourceFile);
++                URL url = new URL(upLoadServerUri);
++
++                // Open a HTTP  connection to  the URL
++                conn = (HttpURLConnection) url.openConnection();
++                conn.setDoInput(true); // Allow Inputs
++                conn.setDoOutput(true); // Allow Outputs
++                conn.setUseCaches(false); // Don't use a Cached Copy
++                conn.setRequestMethod("POST");
++                conn.setRequestProperty("Connection", "Keep-Alive");
++                conn.setRequestProperty("ENCTYPE", "multipart/form-data");
++                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
++                conn.setRequestProperty("uploaded_file", fileName);
++
++                dos = new DataOutputStream(conn.getOutputStream());
++
++                dos.writeBytes(twoHyphens + boundary + lineEnd);
++                dos.writeBytes("Content-Disposition: form-data; name=uploaded_file;filename="
++                        + fileName + "" + lineEnd);
++                dos.writeBytes(lineEnd);
++
++                // create a buffer of maximum size
++                bytesAvailable = fileInputStream.available();
++                bufferSize = Math.min(bytesAvailable, maxBufferSize);
++                buffer = new byte[bufferSize];
++
++                // read file and write it into form...
++                bytesRead = fileInputStream.read(buffer, 0, bufferSize);
++
++                while (bytesRead > 0) {
++
++                    dos.write(buffer, 0, bufferSize);
++                    bytesAvailable = fileInputStream.available();
++                    bufferSize = Math.min(bytesAvailable, maxBufferSize);
++                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
++                }
++
++                // send multipart form data necessary after file data...
++                dos.writeBytes(lineEnd);
++                dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
++
++                // Responses from the server (code and message)
++                serverResponseCode = conn.getResponseCode();
++                String serverResponseMessage = conn.getResponseMessage();
++
++                Log.i("uploadFile", "HTTP Response is : "
++                        + serverResponseMessage + ": " + serverResponseCode);
++
++                if (serverResponseCode == 200) {
++                    String msg = "File Upload Completed.\n\n See uploaded file here : \n\n"
++                            +" http://www.androidexample.com/media/uploads/"
++                            +uploadFileName;
++                    Log.i("uploadFile", msg);
++                }
++                //close the streams //
++                fileInputStream.close();
++                dos.flush();
++                dos.close();
++            } catch (FileNotFoundException e1) {
++                e1.printStackTrace();
++            } catch (MalformedURLException e1) {
++                e1.printStackTrace();
++            } catch (ProtocolException e1) {
++                e1.printStackTrace();
++            } catch (IOException e1) {
++                e1.printStackTrace();
++            } catch (Exception e) {
++                e.printStackTrace();
++            }
++        }
++        return serverResponseCode;
++    }
++
++    /**
++     *Class Message is created to handle php response message
++     *      contains structure:
++     *              [success]: 1 & 0 indicate success or fail
++     *              [message]: String of message
++     */
++    private class Message {
++        private String message = "";
++        private String success = "";
++        Message(){}
++        public String toString(){
++            String result = "{\"success\":"+success+",\"message\":\""+message+"\"}";
++            return result;
++        }
++    }
++
++}
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/AndroidManifest.xml	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/AndroidManifest.xml	(revision )
+@@ -4,6 +4,7 @@
+ 
+     <!-- To access Google+ APIs: -->
+     <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+     <!--
+  To retrieve OAuth 2.0 tokens or invalidate tokens to disconnect a user. This disconnect
+      option is required to comply with the Google+ Sign-In developer policies
+@@ -28,20 +29,25 @@
+         android:icon="@android:color/transparent"
+         android:label="@string/app_name"
+         android:theme="@style/AppTheme" >
++
++        <!-- List view of diary-->
+         <activity
+             android:name=".DiaryList"
+             android:label="@string/app_name" >
+         </activity>
++
++        <!-- Sign up page-->
+         <activity
+             android:name=".SignUp"
+             android:label="@string/title_activity_sign_up" >
+ 
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+-
+                 <category android:name="android.intent.category.LAUNCHER" />
+             </intent-filter>
+         </activity>
++
++        <!-- Login page-->
+         <activity
+             android:name=".LoginActivity"
+             android:label="@string/title_activity_login"
+@@ -56,10 +62,14 @@
+             android:name=".EditDiaryActivity"
+             android:label="@string/title_activity_edit_diary" >
+         </activity>
++
++        <!-- profile-->
+         <activity
+             android:name=".UserProfileActivity"
+             android:label="@string/title_activity_user_profile" >
+         </activity>
++
++        <!-- view of diary detail-->
+         <activity
+             android:name=".DiaryView"
+             android:label="@string/title_activity_diary_view" >
+Index: app/app.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/app.iml	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/app.iml	(revision )
+@@ -9,14 +9,15 @@
+     <facet type="android" name="Android">
+       <configuration>
+         <option name="SELECTED_BUILD_VARIANT" value="debug" />
+-        <option name="SELECTED_TEST_ARTIFACT" value="_android_test_" />
++        <option name="SELECTED_TEST_ARTIFACT" value="_unit_test_" />
+         <option name="ASSEMBLE_TASK_NAME" value="assembleDebug" />
+         <option name="COMPILE_JAVA_TASK_NAME" value="compileDebugSources" />
+-        <option name="ASSEMBLE_TEST_TASK_NAME" value="assembleDebugAndroidTest" />
+-        <option name="COMPILE_JAVA_TEST_TASK_NAME" value="compileDebugAndroidTestSources" />
++        <option name="ASSEMBLE_TEST_TASK_NAME" value="assembleDebugUnitTest" />
++        <option name="COMPILE_JAVA_TEST_TASK_NAME" value="compileDebugUnitTestSources" />
+         <afterSyncTasks>
+-          <task>generateDebugAndroidTestSources</task>
+           <task>generateDebugSources</task>
++          <task>mockableAndroidJar</task>
++          <task>prepareDebugUnitTestDependencies</task>
+         </afterSyncTasks>
+         <option name="ALLOW_USER_CONFIGURATION" value="false" />
+         <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
+@@ -28,7 +29,7 @@
+   </component>
+   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+     <output url="file://$MODULE_DIR$/build/intermediates/classes/debug" />
+-    <output-test url="file://$MODULE_DIR$/build/intermediates/classes/androidTest/debug" />
++    <output-test url="file://$MODULE_DIR$/build/intermediates/classes/test/debug" />
+     <exclude-output />
+     <content url="file://$MODULE_DIR$">
+       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/r/debug" isTestSource="false" generated="true" />
+@@ -36,13 +37,7 @@
+       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/buildConfig/debug" isTestSource="false" generated="true" />
+       <sourceFolder url="file://$MODULE_DIR$/build/generated/source/rs/debug" isTestSource="false" generated="true" />
+       <sourceFolder url="file://$MODULE_DIR$/build/generated/res/rs/debug" type="java-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/res/generated/debug" type="java-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/source/r/androidTest/debug" isTestSource="true" generated="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/source/aidl/androidTest/debug" isTestSource="true" generated="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/source/buildConfig/androidTest/debug" isTestSource="true" generated="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/source/rs/androidTest/debug" isTestSource="true" generated="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/res/rs/androidTest/debug" type="java-test-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/build/generated/res/generated/androidTest/debug" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/build/generated/res/resValues/debug" type="java-resource" />
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/res" type="java-resource" />
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/resources" type="java-resource" />
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/assets" type="java-resource" />
+@@ -50,6 +45,13 @@
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/java" isTestSource="false" />
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/jni" isTestSource="false" />
+       <sourceFolder url="file://$MODULE_DIR$/src/debug/rs" isTestSource="false" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/res" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/resources" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/assets" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/aidl" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/java" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/jni" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/testDebug/rs" isTestSource="true" />
+       <sourceFolder url="file://$MODULE_DIR$/src/main/res" type="java-resource" />
+       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+       <sourceFolder url="file://$MODULE_DIR$/src/main/assets" type="java-resource" />
+@@ -57,13 +59,13 @@
+       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+       <sourceFolder url="file://$MODULE_DIR$/src/main/jni" isTestSource="false" />
+       <sourceFolder url="file://$MODULE_DIR$/src/main/rs" isTestSource="false" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/res" type="java-test-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/resources" type="java-test-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/assets" type="java-test-resource" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/aidl" isTestSource="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/java" isTestSource="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/jni" isTestSource="true" />
+-      <sourceFolder url="file://$MODULE_DIR$/src/androidTest/rs" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/res" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/assets" type="java-test-resource" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/aidl" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/jni" isTestSource="true" />
++      <sourceFolder url="file://$MODULE_DIR$/src/test/rs" isTestSource="true" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/assets" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/bundles" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/classes" />
+@@ -115,6 +117,8 @@
+     <orderEntry type="sourceFolder" forTests="false" />
+     <orderEntry type="library" exported="" name="play-services-maps-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-wallet-7.3.0" level="project" />
++    <orderEntry type="library" exported="" name="gson-2.2.3" level="project" />
++    <orderEntry type="library" exported="" name="jsoup-1.8.3" level="project" />
+     <orderEntry type="library" exported="" name="play-services-drive-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="volley" level="project" />
+     <orderEntry type="library" exported="" name="play-services-analytics-7.3.0" level="project" />
+@@ -129,13 +133,18 @@
+     <orderEntry type="library" exported="" name="play-services-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-base-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-safetynet-7.3.0" level="project" />
++    <orderEntry type="library" exported="" scope="TEST" name="mockito-core-1.9.5" level="project" />
+     <orderEntry type="library" exported="" name="play-services-appinvite-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-gcm-7.3.0" level="project" />
++    <orderEntry type="library" exported="" scope="TEST" name="objenesis-1.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-nearby-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="support-v4-22.1.1" level="project" />
++    <orderEntry type="library" exported="" name="json-simple-1.1.1" level="project" />
+     <orderEntry type="library" exported="" name="play-services-fitness-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-plus-7.3.0" level="project" />
++    <orderEntry type="library" exported="" scope="TEST" name="hamcrest-core-1.3" level="project" />
+     <orderEntry type="library" exported="" name="play-services-wearable-7.3.0" level="project" />
++    <orderEntry type="library" exported="" scope="TEST" name="junit-4.12" level="project" />
+     <orderEntry type="library" exported="" name="play-services-appstate-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-games-7.3.0" level="project" />
+     <orderEntry type="library" exported="" name="play-services-identity-7.3.0" level="project" />
+\ No newline at end of file
+Index: app/src/main/java/com/example/liuqimin/lifary/DiariesDeserializer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/DiariesDeserializer.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/DiariesDeserializer.java	(revision )
+@@ -0,0 +1,27 @@
++package com.example.liuqimin.lifary;
++
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++
++import java.lang.reflect.Type;
++
++/**
++ * Created by liuqi on 2015-10-31.
++ */
++public class DiariesDeserializer  implements JsonDeserializer<Diaries> {
++
++    @Override
++    public Diaries deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
++            throws JsonParseException {
++        final JsonObject jsonObject = json.getAsJsonObject();
++
++        Diary[] product = context.deserialize(jsonObject.get("diaries"), Product[].class);
++
++        final Diaries products = new Diaries();
++        products.setProducts(product);
++        return products;
++    }
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/DiaryDBHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/DiaryDBHandler.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/java/com/example/liuqimin/lifary/DiaryDBHandler.java	(revision )
+@@ -41,7 +41,8 @@
+         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
+     }
+ 
+-    public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler) {
++    public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory,
++                          int version, DatabaseErrorHandler errorHandler) {
+         super(context, name, factory, version, errorHandler);
+     }
+ 
+@@ -155,7 +156,7 @@
+         return diary;
+     }
+ 
+-    public  boolean deleteDiary(int id){
++    public boolean deleteDiary(int id){
+        boolean result = false;
+         String query = "Select * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " =  \"" + id + "\"";
+ 
+Index: app/src/main/java/com/example/liuqimin/lifary/EditDiaryActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/EditDiaryActivity.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/java/com/example/liuqimin/lifary/EditDiaryActivity.java	(revision )
+@@ -16,7 +16,6 @@
+ import android.os.Bundle;
+ import android.os.Environment;
+ import android.provider.MediaStore;
+-import android.support.v4.print.PrintHelper;
+ import android.util.Base64;
+ import android.util.Log;
+ import android.view.Menu;
+@@ -189,7 +188,6 @@
+     @Override
+     public void onClick(View v) {
+ 
+-
+         // ---------------------- Camera Button ------------------------------------------
+         if(v ==  cameraButton){
+             Log.d("Lifary", "cameraButton is clicked");
+@@ -202,7 +200,6 @@
+             cameraButton.setImageResource(R.drawable.camera);
+             bitmap =null;
+ 
+-
+             // ------------- Record Sound Button -------------------------------------------
+         }else if(v == soundButton){
+             Log.d("Lifary", "soundButton clicked");
+@@ -214,7 +211,6 @@
+                     stopRecording();
+                 }
+             }
+-
+ 
+             // -------------------- play Audio Button -----------------------------------------------
+         }else if(v == playButton){
+Index: app/src/test/java/com/example/liuqimin/lifary/DiaryTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/test/java/com/example/liuqimin/lifary/DiaryTest.java	(revision )
++++ app/src/test/java/com/example/liuqimin/lifary/DiaryTest.java	(revision )
+@@ -0,0 +1,185 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-11-01.
++ * Unit test for Diary object for upload
++ */
++
++import android.graphics.drawable.Drawable;
++import android.util.Log;
++
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++
++import org.apache.http.util.ByteArrayBuffer;
++import org.json.JSONException;
++import org.junit.Test;
++
++import java.io.BufferedInputStream;
++import java.io.BufferedReader;
++import java.io.DataInputStream;
++import java.io.DataOutputStream;
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.InputStreamReader;
++import java.net.HttpURLConnection;
++import java.net.URL;
++import java.net.URLConnection;
++
++public class DiaryTest {
++
++    private static String tmp = "";
++
++    @Test
++    public void main() throws IOException, JSONException {
++
++        Diary diary = new Diary(13);
++
++
++        File f = new File("fonts/w1.jpg");
++        if (f.exists()) {
++            System.out.println("Drawable exist!");
++            Drawable d = Drawable.createFromPath(String.valueOf(f));
++        }
++        else
++            System.out.println("Drawable not found!");
++
++        /* URL imageL
++         * sun.awt.image.URLImageSource cannot be cast to java.io.InputStream
++        String url = "http://localhost:8080/wala/image/124.jpg";
++        Bitmap bitmap = null;
++        try {
++            InputStream is = (InputStream) new URL(url).getContent();
++            Drawable d = Drawable.createFromStream(is, "src name");
++            Canvas canvas = new Canvas(bitmap);
++            d.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
++            d.draw(canvas);
++        } catch (Exception e) {
++            System.out.println(e.toString());
++        }
++        */
++
++        URL url = new URL( "http://192.168.1.71:8080/wala/image/124.jpg");
++        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
++        try {
++            if (urlConnection.getResponseCode() ==urlConnection.HTTP_OK)
++                System.out.println(urlConnection.getResponseMessage());
++
++            DataInputStream dis =new DataInputStream(urlConnection.getInputStream());
++            StringBuffer inputLine = new StringBuffer();
++
++            while ((tmp = dis.readLine()) != null) {
++                inputLine.append(tmp);
++                //System.out.println(tmp);
++            }
++            String rs = inputLine.toString();
++            //System.out.print(rs);
++            diary.setImage(rs);
++
++        } catch (IOException e) {
++            e.printStackTrace();
++        }
++
++        diary.setId(44);
++        diary.setSound("sound");
++        diary.setDate("2011111");
++        diary.setImage("asdfasdfjasdjkksakdkfkdkakdsffffasdf$%#^$%^#$%^ #$%^$%#^$%^ADFASDFASDFASDF");
++        diary.addLocation(13, 123);
++
++        final GsonBuilder gsonBuilder = new GsonBuilder();
++        gsonBuilder.registerTypeAdapter(Diary.class, new DiaryDeserializer());
++        gsonBuilder.registerTypeAdapter(Diaries.class, new DiariesDeserializer());
++        final Gson gson = gsonBuilder.create();
++
++        String temp_p = gson.toJson(diary);
++
++        //POST new obj to db
++
++        URL url2 = new URL( "http://localhost:8080/wala/create_diary.php");
++        HttpURLConnection connection = (HttpURLConnection) url2.openConnection();
++        connection.setRequestMethod("POST");
++        connection.setRequestProperty("Content-Type", "application/json");
++        connection.setDoInput(true);
++        connection.setDoOutput(true);
++        connection.connect();
++
++        //Send request
++        DataOutputStream wr = new DataOutputStream(
++                connection.getOutputStream ());
++        wr.writeBytes(temp_p);
++
++
++        System.out.println("wr:" + wr.size());
++        //wr.writeBytes(URLEncoder.encode(jsonParam, "UTF-8"));
++        wr.flush();
++        wr.close();
++
++        System.out.println("diary:" + temp_p);
++        System.out.println("request sent");
++
++        //Get Response
++        InputStream is = connection.getInputStream();
++        BufferedReader rd = new BufferedReader(new InputStreamReader(is));
++        String line;
++        StringBuffer response = new StringBuffer();
++        while((line = rd.readLine()) != null) {
++            response.append(line);
++            response.append('\r');
++        }
++        rd.close();
++        System.out.println("respons:" + response.toString());
++
++        /*Strange example, null response
++        * seems like we need extends AsyncTstk<>
++        //String url2 = "http://localhost:8080/wala/create_diary.php";
++        //DefaultHttpClient httpClient = new DefaultHttpClient();
++        //HttpPost httpPost = new HttpPost(url2);
++        //httpPost.setEntity(se);
++        //httpPost.setHeader("Accept", "application/json");
++        //httpPost.setHeader("Content-type", "application/json");
++        */
++
++    }
++
++    public void DownloadFromUrl(String imageURL, String fileName) {  //this is the downloader method
++        try {
++            File file;
++            URL url = new URL("http://www.planwallpaper.com/static/images/Winter-Tiger-Wild-Cat-Images.jpg");
++                    file = new File(fileName);
++
++            long startTime = System.currentTimeMillis();
++                        /* Open a connection to that URL. */
++            URLConnection ucon = url.openConnection();
++
++                        /*
++                         * Define InputStreams to read from the URLConnection.
++                         */
++            InputStream is = ucon.getInputStream();
++            BufferedInputStream bis = new BufferedInputStream(is);
++
++                        /*
++                         * Read bytes to the Buffer until there is nothing more to read(-1).
++                         */
++            ByteArrayBuffer baf = new ByteArrayBuffer(50);
++            int current = 0;
++            while ((current = bis.read()) != -1) {
++                baf.append((byte) current);
++            }
++
++                        /* Convert the Bytes read to a String. */
++            FileOutputStream fos = new FileOutputStream(file);
++            fos.write(baf.toByteArray());
++            fos.close();
++            Log.d("ImageManager", "download ready in"
++                    + ((System.currentTimeMillis() - startTime) / 1000)
++                    + " sec");
++
++        } catch (IOException e) {
++            Log.d("ImageManager", "Error: " + e);
++        }
++
++    }
++
++}
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ .idea/misc.xml	(revision )
+@@ -37,26 +37,10 @@
+     <ConfirmationsSetting value="0" id="Add" />
+     <ConfirmationsSetting value="0" id="Remove" />
+   </component>
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="true" assert-keyword="true" jdk-15="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="true" assert-keyword="true" jdk-15="true" project-jdk-name="Android API 23 Platform" project-jdk-type="Android SDK">
+     <output url="file://$PROJECT_DIR$/build/classes" />
+   </component>
+   <component name="ProjectType">
+     <option name="id" value="Android" />
+-  </component>
+-  <component name="masterDetails">
+-    <states>
+-      <state key="ProjectJDKs.UI">
+-        <settings>
+-          <last-edited>1.8</last-edited>
+-          <splitter-proportions>
+-            <option name="proportions">
+-              <list>
+-                <option value="0.2" />
+-              </list>
+-            </option>
+-          </splitter-proportions>
+-        </settings>
+-      </state>
+-    </states>
+   </component>
+ </project>
+\ No newline at end of file
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/build.gradle	(revision )
+@@ -19,11 +19,33 @@
+ 
+         }
+     }
++
++    testOptions {
++
++        unitTests.returnDefaultValues = true
++
+-}
++    }
++}
+ 
+ dependencies {
+     compile fileTree(dir: 'libs', include: ['*.jar'])
++
++    // Unit testing dependencies
++    testCompile 'junit:junit:4.12'
++    testCompile "org.mockito:mockito-core:1.9.5"
++    // Set this dependency if you want to use Mockito
++    //testCompile 'org.mockito:mockito-core:1.10.19'
++    // Set this dependency if you want to use Hamcrest matching
++    //testCompile 'org.hamcrest:hamcrest-library:1.1'
++    //compile 'com.android.support:appcompat-v7:21.0.3'
++    //compile 'com.android.support:support-v4:21.0.3'
++    //compile 'com.mcxiaoke.volley:library-aar:1.0.0'
++
++
+     compile 'com.google.android.gms:play-services:7.3.0'
+     compile 'com.android.support:appcompat-v7:22.1.1'
++    compile files ('libs/gson-2.2.3.jar')
++
++
+     //  compile 'com.firebase:firebase-client-android:2.3.1+'
+ }
+Index: app/src/test/java/com/example/liuqimin/lifary/JsonTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/test/java/com/example/liuqimin/lifary/JsonTest.java	(revision )
++++ app/src/test/java/com/example/liuqimin/lifary/JsonTest.java	(revision )
+@@ -0,0 +1,71 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-23.
++ */
++
++
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++
++import org.junit.Test;
++
++import java.io.DataInputStream;
++import java.io.IOException;
++import java.net.HttpURLConnection;
++import java.net.URL;
++public class JsonTest {
++
++    //string that read in server response;
++    private static String tmp = "";
++
++    @Test
++    public void main() throws IOException {
++        System.out.println("Hello, World!");
++        JsonTest();
++    }
++
++    public void JsonTest() throws IOException {
++
++        //testing gson
++        /*
++        String jsonStr = "{\"phonetype\":\"N95\",\"cat\":\"WP\"}";
++        Gson gson = new Gson();
++        String json = gson.toJson(jsonStr);
++        System.out.println(json);
++        */
++        URL url = new URL("http://192.168.1.71:8080/wala/get_all_products.php");
++        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
++        try {
++            if (urlConnection.getResponseCode() ==urlConnection.HTTP_OK)
++                System.out.println(urlConnection.getResponseMessage());
++
++            DataInputStream dis =new DataInputStream(urlConnection.getInputStream());
++            StringBuffer inputLine = new StringBuffer();
++
++            while ((tmp = dis.readLine()) != null) {
++                inputLine.append(tmp);
++                System.out.println(tmp);
++            }
++            String rs = inputLine.toString();
++
++            /*
++             *Using Gson builder with deserializer
++             */
++            final GsonBuilder gsonBuilder = new GsonBuilder();
++            gsonBuilder.registerTypeAdapter(Product.class, new ProductDeserializer());
++            gsonBuilder.registerTypeAdapter(Products.class, new ProductsDeserializer());
++            final Gson gson = gsonBuilder.create();
++
++            final Products products = gson.fromJson(rs, Products.class);
++            System.out.println("Convert json string into object: \n" + products);
++
++            String temp_p = gson.toJson(products);
++            System.out.println("Convert object into json format: \n" + temp_p);
++
++        } catch (IOException e) {
++            e.printStackTrace();
++        }
++
++    }
++}
+Index: app/src/main/res/values/strings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/strings.xml	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/res/values/strings.xml	(revision )
+@@ -33,12 +33,17 @@
+     <string name="url_direct">http://droid.la/apk/qr/</string>
+     <string name="url_source">http://qrdroid.com/services</string>
+ 
+-	<!-- Demo -->
+-	<string name="demo">"This is a demo for Android developers who want to use \"QR Droid\" services in their own apps, for free.\n\nThis won't be useful to final users. Instead, please install \"QR Droid\".\n\nIf you are a developer, get demo documentation and source code here:\nhttp://qrdroid.com/services"</string>
+-	<string name="qrDroid">Get QR Droid</string>
+-	<string name="source">Get demo docs</string>
+-	<string name="close">Close</string>
+-
++    <!-- DB -->
++    <string name="hint_email">Email</string>
++    <string name="hint_password">Password</string>
++    <string name="hint_name">Fullname</string>
++    <string name="btn_login">LOGIN</string>
++    <string name="btn_register">REGISTER</string>
++    <string name="btn_link_to_register">Not a member? Sign up now.</string>
++    <string name="btn_link_to_login">Already registred! Login Me.</string>
++    <string name="welcome">Welcome</string>
++    <string name="btn_logout">LOGOUT</string>
++    <string name="name">Fullname</string>
+ 
+     <!-- My Own Strings -->
+     <string name="hello_world">Hello world!</string>
+Index: app/src/main/java/com/example/liuqimin/lifary/AppConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/AppConfig.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/AppConfig.java	(revision )
+@@ -0,0 +1,18 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-05.
++ */
++public class AppConfig {
++    // server user login url
++    public static String URL_LOGIN = "http://192.168.1.71:8080/android_api/login.php";
++    //register url
++    public static String URL_REGISTER = "http://192.168.1.71:8080/android_api/register.php";
++
++    public static boolean dude(int num){
++        if (num <10)
++            return true;
++        else
++            return false;
++    }
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/DiaryDeserializer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/DiaryDeserializer.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/DiaryDeserializer.java	(revision )
+@@ -0,0 +1,52 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi_000 on 2015-10-28.
++ * This class create the deserializer
++ * of Diary.class
++ */
++
++
++import com.google.gson.JsonArray;
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++
++import java.lang.reflect.Type;
++
++public class DiaryDeserializer implements JsonDeserializer<Diary> {
++
++    @Override
++    public Diary deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
++    throws JsonParseException{
++        final JsonObject jsonObject = json.getAsJsonObject();
++
++        final JsonElement jsonId = jsonObject.get("id");
++        final int id = jsonId.getAsInt();
++        final String date = jsonObject.get("date").getAsString();
++        final String share = jsonObject.get("share").getAsString();
++        final String image = jsonObject.get("image").getAsString();
++        final String audio = jsonObject.get("audio").getAsString();
++        final String text = jsonObject.get("text").getAsString();
++
++        final JsonArray jsonAuthorsArray = jsonObject.get("authors").getAsJsonArray();
++        final String[] authors = new String[jsonAuthorsArray.size()];
++        for (int i = 0; i < authors.length; i++) {
++            final JsonElement jsonAuthor = jsonAuthorsArray.get(i);
++            authors[i] = jsonAuthor.getAsString();
++        }
++
++        final Diary d= new Diary(id);
++        d.setId(id);
++        d.setImage(image);
++        d.setSound(audio);
++        d.addContents(text);
++        d.setShare(Integer.parseInt(share));
++        d.setDate(date);
++
++        return d;
++    }
++
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/AppController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/AppController.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/AppController.java	(revision )
+@@ -0,0 +1,54 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-07.
++ */
++
++import android.app.Application;
++import android.text.TextUtils;
++
++import com.android.volley.Request;
++import com.android.volley.RequestQueue;
++import com.android.volley.toolbox.Volley;
++
++public class AppController extends Application{
++
++    public static final String TAG = AppController.class.getSimpleName();
++
++    private RequestQueue mRequestQueue;
++
++    private static AppController mInstance;
++
++    @Override
++    public void onCreate() {
++        super.onCreate();
++        mInstance = this;
++    }
++
++    public static synchronized AppController getInstance() {
++        return mInstance;
++    }
++
++    public RequestQueue getRequestQueue() {
++        if (mRequestQueue == null) {
++            mRequestQueue = Volley.newRequestQueue(getApplicationContext());
++        }
++
++        return mRequestQueue;
++    }
++
++    public <T> void addToRequestQueue(Request<T> req, String tag) {
++        req.setTag(TextUtils.isEmpty(tag) ? TAG : tag);
++        getRequestQueue().add(req);
++    }
++
++    public <T> void addToRequestQueue(Request<T> req) {
++        req.setTag(TAG);
++        getRequestQueue().add(req);
++    }
++
++    public void cancelPendingRequests(Object tag) {
++        if (mRequestQueue != null) {
++            mRequestQueue.cancelAll(tag);
++        }
++    }}
+Index: .idea/dictionaries/liuqi.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/dictionaries/liuqi.xml	(revision )
++++ .idea/dictionaries/liuqi.xml	(revision )
+@@ -0,0 +1,3 @@
++<component name="ProjectDictionaryState">
++  <dictionary name="liuqi" />
++</component>
+\ No newline at end of file
+Index: app/src/main/java/com/example/liuqimin/lifary/product.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/product.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/java/com/example/liuqimin/lifary/Product.java	(revision )
+@@ -3,16 +3,34 @@
+ /**
+  * Created by liuqi on 2015-10-24.
+  */
+-public class product {
++public class Product {
+     private String pid;
+     private String name;
+     private String price;
+     private String created_at;
+     private String updated_at;
+ 
+-
++    public Product(){
++        pid = "";
++        name = "";
++        price = "";
++        created_at = "";
++        updated_at = "";
++    }
+     @Override
+     public String toString() {
+         return pid + " - " + name + " - " + price+ " - " + created_at+ " - " + updated_at;
++    }
++
++    public void setPid(String pid){if(notNull(pid))this.pid = pid;}
++    public void setName(String name){if(notNull(name))this.name = name;}
++    public void setPrice(String price){if(notNull(price))this.price = price;}
++    public void setCreated_at(String created_at){if(notNull(created_at))this.created_at = created_at;}
++    public void setUpdated_at(String updated_at){if(notNull(updated_at))this.updated_at = updated_at;}
++    private boolean notNull (String test){
++        if(test.isEmpty())
++            return false;
++        System.out.print("null update");
++        return true;
+     }
+ }
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- build.gradle	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ build.gradle	(revision )
+@@ -4,7 +4,7 @@
+         jcenter()
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:1.2.3'
++        classpath 'com.android.tools.build:gradle:1.3.0'
+     }
+ }
+ 
+Index: app/src/main/java/com/example/liuqimin/lifary/h.java
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/h.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/java/com/example/liuqimin/lifary/h.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
+@@ -1,16 +0,0 @@
+-package com.example.liuqimin.lifary;
+-
+-import android.util.Log;
+-
+-/**
+- * Created by liuqi on 2015-08-04.
+- */
+-public class h {
+-    private String image;
+-    public h(){}
+-
+-    public void print(){
+-        Log.d("fb", "img:" + image);
+-    }
+-    public String getImage(){return image;}
+-}
+Index: app/src/test/java/com/example/liuqimin/lifary/uploadTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/test/java/com/example/liuqimin/lifary/uploadTest.java	(revision )
++++ app/src/test/java/com/example/liuqimin/lifary/uploadTest.java	(revision )
+@@ -0,0 +1,47 @@
++package com.example.liuqimin.lifary;
++
++import org.junit.Test;
++
++import java.io.IOException;
++import java.util.HashMap;
++
++
++/**
++ * Created by liuqi on 2015-11-09.
++ */
++public class uploadTest  {
++
++    @Test
++    public void main() throws IOException {
++        //uploadTest();
++
++        //downloadTest();
++
++        uploadFileTest();
++    }
++
++    public void uploadFileTest(){
++        ConnectionWithPost con = new ConnectionWithPost();
++        int respond = con.uploadFile("C:\\Users\\liuqi\\Desktop\\2.png");
++        System.out.println("respond:" + respond);
++    }
++
++    public void uploadTest(){
++        ConnectionWithPost con = new ConnectionWithPost();
++        HashMap<String, String> map = new HashMap<String, String>();
++        map.put("id", "123");
++        map.put("test", "yes");
++        String url_test = "http://192.168.1.71:8080/wala/post_test.php";
++
++        String respond = con.sendRequest(url_test, map);
++        System.out.println("respond:" + respond);
++    }
++    public void downloadTest() throws IOException {
++        String file_name = "download_file.jpg";
++        String file_url = "http://192.168.1.71:8080/wala/image/1.jpg";
++        DownloadFromServer dl = new DownloadFromServer();
++        String file_location =dl.DownloadFromServer(file_url, file_name);
++        System.out.println("downloaded file location:" + file_location);
++    }
++
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/Diary.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/Diary.java	(revision 59a02dad90ebfabeeb19c4694973ace1a10956fe)
++++ app/src/main/java/com/example/liuqimin/lifary/Diary.java	(revision )
+@@ -6,8 +6,6 @@
+ import android.util.Log;
+ 
+ import java.io.ByteArrayOutputStream;
+-import java.nio.ByteBuffer;
+-import java.util.Arrays;
+ import java.util.Calendar;
+ 
+ /**
+@@ -22,7 +20,6 @@
+     private int share;
+   //  private byte[]img;
+    // private byte[] sound;
+-
+     private String image;
+     private String sound;
+ 
+@@ -50,11 +47,16 @@
+     public void addContents(String contents){
+         text = contents;
+     }
+-
+     public void addLocation(float lat, float lon){
+         latitude = lat;
+         longitude = lon;
+     }
++    public void setImage(String image){
++        this.image = image;
++    }
++    public void setSound(String sound){
++        this.sound = sound;
++    }
+     public void addImage(Bitmap bmp){
+ 
+         byte[] img = null;
+@@ -64,10 +66,7 @@
+         if(img == null)
+             image = "";
+         else    image = Base64.encodeToString(img, Base64.DEFAULT);
+-
+-
+-        Log.d("Lifary", "Diary: img == " + Arrays.toString(img));
+-
++        //Log.d("Lifary", "Diary: img == " + Arrays.toString(img));
+     }
+     public void addSound(byte[] audioByte){
+         if(audioByte != null) {
+@@ -88,13 +87,14 @@
+         share = s;
+     }
+     public void setDate(String d){date = d;}
+-
+     public void setId(int i){this.id = i;}
++
+     public int getId(){ return id;}
+     public String getDate(){return date;}
+     public String getContent(){return text;}
+     public float getLatitude(){return latitude;}
+     public float getLongitude(){return longitude;}
++    public int getShare(){return share;}
+     public byte[] getImg(){
+             byte[] img = null;
+             img = Base64.decode(image,Base64.DEFAULT);
+@@ -105,9 +105,7 @@
+         soundByte = Base64.decode(sound,Base64.DEFAULT);
+         return soundByte;
+     }
+-    public int getShare(){return share;}
+     public Bitmap getImgBitmap(){
+-
+         byte[] img = getImg();
+         BitmapFactory.Options options = new BitmapFactory.Options();
+         Log.d("Lifary", "Diary: img.size === " + img.length);
+Index: .idea/inspectionProfiles/profiles_settings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/inspectionProfiles/profiles_settings.xml	(revision )
++++ .idea/inspectionProfiles/profiles_settings.xml	(revision )
+@@ -0,0 +1,7 @@
++<component name="InspectionProjectProfileManager">
++  <settings>
++    <option name="PROJECT_PROFILE" value="Project Default" />
++    <option name="USE_PROJECT_PROFILE" value="true" />
++    <version value="1.0" />
++  </settings>
++</component>
+\ No newline at end of file
+Index: app/src/test/java/com/example/liuqimin/lifary/MySqlHandlerTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/test/java/com/example/liuqimin/lifary/MySqlHandlerTest.java	(revision )
++++ app/src/test/java/com/example/liuqimin/lifary/MySqlHandlerTest.java	(revision )
+@@ -0,0 +1,138 @@
++package com.example.liuqimin.lifary;
++
++import com.google.gson.Gson;
++
++import org.apache.http.NameValuePair;
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++
++import java.io.BufferedReader;
++import java.io.DataInputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.InputStreamReader;
++import java.net.HttpURLConnection;
++import java.net.URL;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++
++import static com.example.liuqimin.lifary.MySqlHandler.isConnected;
++import static org.junit.Assert.assertTrue;
++
++/**
++ * Created by liuqi on 2015-10-12.
++ */
++public class MySqlHandlerTest {
++    private static String url_all_products = "http://192.168.1.71:8080/wala/test.php";
++    // JSON Node names
++    private static final String TAG_SUCCESS = "success";
++    private static final String TAG_PRODUCTS = "products";
++    private static final String TAG_PID = "pid";
++    private static final String TAG_NAME = "name";
++
++    private static String tmp = "";
++    // products JSONArray
++    //JSONArray product = null;
++
++
++    static InputStream is = null;
++
++    //JSONArray products = null;
++    ArrayList<HashMap<String, String>> productsList;
++
++    private static String getStringFromInputStream(InputStream is) {
++
++        BufferedReader br = null;
++        StringBuilder sb = new StringBuilder();
++
++        String line = "a?";
++        try {
++
++            br = new BufferedReader(new InputStreamReader(is));
++            while ((line = br.readLine()) != null) {
++                sb.append(line);
++            }
++
++        } catch (IOException e) {
++            e.printStackTrace();
++        } finally {
++            if (br != null) {
++                try {
++                    br.close();
++                } catch (IOException e) {
++                    e.printStackTrace();
++                }
++            }
++        }
++        return line;
++    }
++
++
++    @Before
++    public void setUp() throws Exception {
++        productsList = new ArrayList<HashMap<String, String>>();
++    }
++
++    @After
++    public void tearDown() throws Exception {
++
++    }
++
++    @Test
++    public void testMySqlHandler() throws Exception {
++        assertTrue(isConnected(4));
++
++        List<NameValuePair> params = new ArrayList<NameValuePair>();
++        // getting JSON string from URL
++        //JSONObject json = jParser.makeHttpRequest(url_all_products, "GET", params);
++        //System.out.print("All Products: " + json.toString());
++
++        //Httpclient
++        //DefaultHttpClient httpClient = new DefaultHttpClient();
++        //HttpGet httpGet = new HttpGet(url_all_products);
++        //http response
++        //HttpResponse response = httpClient.execute(httpGet);
++
++        System.out.print("wala");
++
++        URL url = new URL("http://192.168.1.71:8080/wala/get_all_products.php");
++        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
++        try {
++            if (urlConnection.getResponseCode() ==urlConnection.HTTP_OK)
++            {
++                Map<String, List<String>> map = urlConnection.getHeaderFields();
++                System.out.println("Printing Response Header...\n");
++
++                for (Map.Entry<String, List<String>> entry : map.entrySet())
++                {
++                    System.out.println("Key : " + entry.getKey() + " ,Value : " + entry.getValue());
++                }
++
++                System.out.println(urlConnection.getResponseMessage());
++
++                DataInputStream dis =new DataInputStream(urlConnection.getInputStream());
++                StringBuffer inputLine = new StringBuffer();
++
++                while ((tmp = dis.readLine()) != null) {
++                    inputLine.append(tmp);
++                    System.out.println(tmp);
++                }
++
++                String rs = inputLine.toString();
++                //return new DataInputStream(urlConnection.getInputStream())
++                Gson gson = new Gson();
++                String json = gson.toJson(rs);
++                System.out.println("temp"+ json);
++
++                dis.close();
++            }
++        }finally {
++            urlConnection.disconnect();
++        }
++
++    }
++}
++
+Index: app/src/main/java/com/example/liuqimin/lifary/DiaryViewRDB.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/DiaryViewRDB.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/DiaryViewRDB.java	(revision )
+@@ -0,0 +1,62 @@
++package com.example.liuqimin.lifary;
++
++import android.app.Activity;
++import android.media.MediaPlayer;
++import android.os.Bundle;
++import android.view.View;
++import android.widget.ImageButton;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import java.io.IOException;
++import java.net.HttpURLConnection;
++import java.net.MalformedURLException;
++import java.net.URL;
++
++/**
++ * Created by liuqi on 2015-11-05.
++ */
++public class DiaryViewRDB extends Activity implements View.OnClickListener, Communication {
++
++    Diary diary;
++    TextView date, share, content, location;
++    ImageView img;
++    ImageButton audioPlay;
++    MediaPlayer mediaPlayer;
++
++    boolean isPlaying = false;
++    double diaryCounter = 0;
++    DiaryHelper targetPost = null;
++    @Override
++    public void onCreate(Bundle savedInstanceState) {
++
++        super.onCreate(savedInstanceState);
++        setContentView(R.layout.activity_diary_view);
++
++        try {
++            URL url = new URL("http://192.168.1.71:8080/wala/get_all_products.php");
++            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
++            if (urlConnection.getResponseCode() == urlConnection.HTTP_OK) {
++                System.out.println(urlConnection.getResponseMessage());
++
++            }
++
++        } catch (MalformedURLException e) {
++            e.printStackTrace();
++        } catch (IOException e) {
++            e.printStackTrace();
++        }
++
++
++    }
++
++    @Override
++    public void onClick(View v) {
++
++    }
++
++    @Override
++    public void com(String contents) {
++
++    }
++}
+Index: .idea/inspectionProfiles/Project_Default.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/inspectionProfiles/Project_Default.xml	(revision )
++++ .idea/inspectionProfiles/Project_Default.xml	(revision )
+@@ -0,0 +1,10 @@
++<component name="InspectionProjectProfileManager">
++  <profile version="1.0">
++    <option name="myName" value="Project Default" />
++    <inspection_tool class="AndroidLintGradleCompatible" enabled="false" level="ERROR" enabled_by_default="false" />
++    <inspection_tool class="LoggerInitializedWithForeignClass" enabled="false" level="WARNING" enabled_by_default="false">
++      <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger" />
++      <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
++    </inspection_tool>
++  </profile>
++</component>
+\ No newline at end of file
+Index: app/src/main/java/com/example/liuqimin/lifary/SessionManager.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/SessionManager.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/SessionManager.java	(revision )
+@@ -0,0 +1,48 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-12.
++ */
++import android.content.Context;
++import android.content.SharedPreferences;
++import android.content.SharedPreferences.Editor;
++import android.util.Log;
++
++public class SessionManager {
++    // LogCat tag
++    private static String TAG = SessionManager.class.getSimpleName();
++
++    // Shared Preferences
++    SharedPreferences pref;
++
++    Editor editor;
++    Context _context;
++
++    // Shared pref mode
++    int PRIVATE_MODE = 0;
++
++    // Shared preferences file name
++    private static final String PREF_NAME = "Login";
++
++    private static final String KEY_IS_LOGGEDIN = "isLoggedIn";
++
++    public SessionManager(Context context) {
++        this._context = context;
++        pref = _context.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
++        editor = pref.edit();
++    }
++
++    public void setLogin(boolean isLoggedIn) {
++
++        editor.putBoolean(KEY_IS_LOGGEDIN, isLoggedIn);
++
++        // commit changes
++        editor.commit();
++
++        Log.d(TAG, "User login session modified!");
++    }
++
++    public boolean isLoggedIn(){
++        return pref.getBoolean(KEY_IS_LOGGEDIN, false);
++    }
++}
+Index: app/src/test/java/com/example/liuqimin/lifary/AppConfigTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/test/java/com/example/liuqimin/lifary/AppConfigTest.java	(revision )
++++ app/src/test/java/com/example/liuqimin/lifary/AppConfigTest.java	(revision )
+@@ -0,0 +1,75 @@
++package com.example.liuqimin.lifary; /**
++ * Created by liuqi on 2015-10-11.
++ */
++
++import org.apache.http.HttpResponse;
++import org.apache.http.NameValuePair;
++import org.apache.http.client.HttpClient;
++import org.apache.http.client.entity.UrlEncodedFormEntity;
++import org.apache.http.client.methods.HttpGet;
++import org.apache.http.client.methods.HttpPost;
++import org.apache.http.impl.client.DefaultHttpClient;
++import org.apache.http.message.BasicNameValuePair;
++import org.junit.Test;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class AppConfigTest {
++    @Test
++    public void main() {
++        System.out.println("Hello, World!");
++        AppTest();
++    }
++
++    public void AppTest() {
++
++        String formhash = "";
++        //assertTrue("wrong?", AppConfig.dude(40));
++        System.out.println("errrr");
++
++        HttpClient httpClient = new DefaultHttpClient();
++        //得到网页的formhash值，用Jsoup解析出来
++        //HttpGet httpGet = new HttpGet("http://www.hi-pda.com/forum/logging.php?action=login");
++        HttpGet httpGet = new HttpGet("http://bbs.saraba1st.com/2b");
++        try{
++            HttpResponse httpResponse = httpClient.execute(httpGet);
++            System.out.println("formhash");
++            //HttpEntity httpEntity = httpResponse.getEntity();j
++            //String s = EntityUtils.toString(httpEntity, "GBK");
++
++            //Element formhash_Element = (Element) Jsoup.parse(s).select("input[name=formhash]").first();
++            //formhash = formhash_Element.attr("value");
++            System.out.println("formhash");
++            System.out.println(formhash);
++        }
++        catch(Exception e ){
++            System.out.println(e.toString());
++        }
++        //下面我们就可以登陆了，用HttpPost：
++        //http://bbs.saraba1st.com/2b/member.php?mod=logging&amp;action=login&amp;loginsubmit=yes&amp;infloat=yes&amp;lssubmit=yes
++        HttpPost httpPost=new HttpPost("http://bbs.saraba1st.com/2b/member.php?mod=logging&amp;action=login&amp;loginsubmit=yes&amp;infloat=yes&amp;lssubmit=yes");
++        List<NameValuePair> params=new ArrayList<NameValuePair>();
++        params.add(new BasicNameValuePair("formhash",formhash));
++        params.add(new BasicNameValuePair("loginfield","username"));
++        params.add(new BasicNameValuePair("password","love1115"));
++        params.add(new BasicNameValuePair("questionid","0"));
++        params.add(new BasicNameValuePair("referer","http://www.hi-pda.com/forum/index.php"));
++        params.add(new BasicNameValuePair("username","关空空"));
++        try {
++            httpPost.setEntity(new UrlEncodedFormEntity(params, "GBK"));
++
++            HttpResponse response=httpClient.execute(httpPost);
++
++            System.out.println(response.toString());
++
++            //HttpEntity entity=response.getEntity();
++            //String ans=EntityUtils.toString(entity);
++
++
++        }catch (Exception e){
++            System.out.println(e.toString());
++        }
++    }
++
++}
+\ No newline at end of file
+Index: app/src/main/java/com/example/liuqimin/lifary/ProductDeserializer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/ProductDeserializer.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/ProductDeserializer.java	(revision )
+@@ -0,0 +1,47 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-29.
++ */
++
++import com.google.gson.JsonDeserializationContext;
++import com.google.gson.JsonDeserializer;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonParseException;
++
++import java.lang.reflect.Type;
++
++public class ProductDeserializer implements JsonDeserializer<Product> {
++    @Override
++    public Product deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
++            throws JsonParseException{
++
++
++        final JsonObject jsonObject = json.getAsJsonObject();
++        final String pid = jsonObject.get("pid").getAsString();
++        final String name = jsonObject.get("name").getAsString();
++        final String price = jsonObject.get("price").getAsString();
++
++        //eliminate null exception
++        String updated_at = "null";
++        String created_at = "null";
++        final JsonElement created_at_Json = jsonObject.get("created_at");
++        final JsonElement update_at_Json = jsonObject.get("updated_at");
++        if(!(update_at_Json.isJsonNull())) {
++            updated_at = update_at_Json.getAsString();
++        }
++        if(!(created_at_Json.isJsonNull())){
++            created_at =  created_at_Json.getAsString();
++        }
++
++        final Product d= new Product();
++        d.setPid(pid);
++        d.setName(name);
++        d.setPrice(price);
++        d.setCreated_at(created_at);
++        d.setUpdated_at(updated_at);
++
++        return d;
++    }
++}
+Index: app/src/main/res/values/colors.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/colors.xml	(revision )
++++ app/src/main/res/values/colors.xml	(revision )
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++
++    <color name="bg_login">#26ae90</color>
++    <color name="bg_register">#2e3237</color>
++    <color name="bg_main">#428bca</color>
++    <color name="white">#ffffff</color>
++    <color name="input_login">#222222</color>
++    <color name="input_login_hint">#999999</color>
++    <color name="input_register">#888888</color>
++    <color name="input_register_bg">#3b4148</color>
++    <color name="input_register_hint">#5e6266</color>
++    <color name="btn_login">#26ae90</color>
++    <color name="btn_login_bg">#eceef1</color>
++    <color name="lbl_name">#333333</color>
++    <color name="btn_logut_bg">#ff6861</color>
++
++</resources>
+\ No newline at end of file
+Index: app/src/androidTest/java/com/example/liuqimin/lifary/DbTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/androidTest/java/com/example/liuqimin/lifary/DbTest.java	(revision )
++++ app/src/androidTest/java/com/example/liuqimin/lifary/DbTest.java	(revision )
+@@ -0,0 +1,22 @@
++package com.example.liuqimin.lifary;
++
++import org.junit.Test;
++import java.util.regex.Pattern;
++import static org.junit.Assert.*;
++//import static org.junit.Assert.assertFalse;
++//import static org.junit.Assert.assertTrue;
++
++/**
++ * Created by liuqi on 2015-10-11.
++ */
++public class DbTest {
++    @Test
++    public void DbTest(){
++        assert(Log.d(DEBUG, "cannot find diary by time"));
++    }
++    public void Db_ReturnValue_Test(){
++        assert(Log.d(DEBUG, "cannot find diary by time"));
++    }
++
++
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/Products.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/Products.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/Products.java	(revision )
+@@ -0,0 +1,19 @@
++package com.example.liuqimin.lifary;
++
++/**
++ * Created by liuqi on 2015-10-29.
++ */
++public class Products {
++    private Product[] products;
++
++    public void setProducts (Product[] products){this.products = products;}
++    @Override
++    public String toString (){
++        String results = "";
++        for (Product product: products) {
++            results = results+"\n"+product.toString();
++        }
++        return results;
++    }
++
++}
+Index: app/src/main/java/com/example/liuqimin/lifary/DownloadFromServer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/liuqimin/lifary/DownloadFromServer.java	(revision )
++++ app/src/main/java/com/example/liuqimin/lifary/DownloadFromServer.java	(revision )
+@@ -0,0 +1,81 @@
++package com.example.liuqimin.lifary;
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.net.HttpURLConnection;
++import java.net.URL;
++
++/**
++ * This class help download file from target server
++ * Created by liuqi on 2015-11-11.
++ */
++public class DownloadFromServer {
++
++    //todo make it compatible for android
++    private final String DIR = "C:\\Users\\liuqi\\Desktop\\";
++
++    /**
++     * This method create a local file that is downloaded from server
++     *
++     * @param dwnload_file_path This is the url of the target file
++     * @param file_name This is the local file name
++     * @return String That indicate the absolute path of downloaded file;
++     * @throws IOException
++     */
++    public String DownloadFromServer (String dwnload_file_path, String file_name) throws IOException {
++        int downloadedSize = 0;
++        int totalSize = 0;
++
++        URL url = new URL(dwnload_file_path);
++        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
++
++        urlConnection.setRequestMethod("GET");
++        urlConnection.setDoOutput(true);
++        urlConnection.connect();
++
++        //set the path where we want to save the file
++        //todo update on real test
++        //File SDCardRoot = Environment.getExternalStorageDirectory();
++        //create a new file, to save the downloaded file
++        File file = new File(DIR,file_name);
++
++        int duplicate = 0;
++
++        /**
++         * Check for duplicate
++         */
++        while (file.exists() || duplicate >100){
++            StringBuilder builder = new StringBuilder(file_name);
++            if(file_name.contains("(duplicate"))
++                builder.replace(file_name.indexOf("(duplicate") + 10, file_name.indexOf(")."), Integer.toString(duplicate++));
++            else
++                builder.insert(file_name.indexOf("."), "(duplicate" + Integer.toString(duplicate++) + ")");
++            file_name = builder.toString();
++            file = new File(DIR,file_name);
++        }
++
++        FileOutputStream fileOutput = new FileOutputStream(file);
++
++        //Stream used for reading the data from the internet
++        InputStream inputStream = urlConnection.getInputStream();
++
++        //this is the total size of the file which we are downloading
++        totalSize = urlConnection.getContentLength();
++
++        //create a buffer...
++        byte[] buffer = new byte[1024];
++        int bufferLength = 0;
++
++        while ( (bufferLength = inputStream.read(buffer)) > 0 ) {
++            fileOutput.write(buffer, 0, bufferLength);
++            downloadedSize += bufferLength;
++            // update the progressbar //
++        }
++        //close the output stream when complete //
++        fileOutput.close();
++        return file.getAbsolutePath();
++    }
++
++}

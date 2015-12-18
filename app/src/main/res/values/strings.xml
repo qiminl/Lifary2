@@ -33,12 +33,25 @@ Any other use of this code is forbidden.
     <string name="url_direct">http://droid.la/apk/qr/</string>
     <string name="url_source">http://qrdroid.com/services</string>
 
-	<!-- Demo -->
-	<string name="demo">"This is a demo for Android developers who want to use \"QR Droid\" services in their own apps, for free.\n\nThis won't be useful to final users. Instead, please install \"QR Droid\".\n\nIf you are a developer, get demo documentation and source code here:\nhttp://qrdroid.com/services"</string>
-	<string name="qrDroid">Get QR Droid</string>
-	<string name="source">Get demo docs</string>
-	<string name="close">Close</string>
+    <string name="UPLOAD_DIARY">http://192.168.1.71:8000/wala/upload_diary.php</string>
+    <string name="DOWNLOAD_ALL_DIARIES_URL">http://192.168.1.71:8000/wala/get_all_diaries.php</string>
+    <string name="UPLOAD_FILE">http://192.168.1.71:8000/wala/UploadToServer.php</string>
+    <string name="UPLOAD_DIARY_URL">http://192.168.1.71:8000/wala/upload_diary.php</string>
+    <string name="DOWNLOAD_USER_DIARIES_URL">http://192.168.1.71:8000/wala/get_diary.php</string>
+    <string name="LOGIN">http://192.168.1.71:8000/wala/login.php</string>
+    <string name="REGISTER">http://192.168.1.71:8000/wala/register.php</string>
 
+    <!-- DB -->
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_name">Fullname</string>
+    <string name="btn_login">LOGIN</string>
+    <string name="btn_register">REGISTER</string>
+    <string name="btn_link_to_register">Not a member? Sign up now.</string>
+    <string name="btn_link_to_login">Already registred! Login Me.</string>
+    <string name="welcome">Welcome</string>
+    <string name="btn_logout">LOGOUT</string>
+    <string name="name">Fullname</string>
 
     <!-- My Own Strings -->
     <string name="hello_world">Hello world!</string>

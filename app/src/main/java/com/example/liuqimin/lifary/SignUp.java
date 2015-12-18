@@ -1,28 +1,20 @@
 package com.example.liuqimin.lifary;
 
-import android.app.ActionBar;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.TypefaceSpan;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import java.net.HttpURLConnection;
+import java.util.HashMap;
 
 
 public class SignUp extends Activity implements View.OnClickListener{
@@ -32,13 +24,28 @@ public class SignUp extends Activity implements View.OnClickListener{
     Button signUpButton;
     Button loginPageButton;
     EditText passwordConfirmEdit;
-    Firebase rootRef;
+    private ProgressDialog pDialog;
+    private SessionManager session;
+    private HashMap<String, String> map  = new HashMap<>();
+    private String unique = "";
+    private boolean success = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
-
+        // session manager
+        session = new SessionManager(getApplicationContext());
+        // Check if user is already logged in or not
+        /*
+        if (session.isLoggedIn()) {
+            // User is already logged in. Take him to main activity
+            //todo change to main act
+            Intent intent = new Intent(SignUp.this,
+                    LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }*/
         usernameEditText = (EditText) findViewById(R.id.usernameEdittext);
         passwordEditText = (EditText) findViewById(R.id.passwordEditText);
         signUpButton = (Button) findViewById(R.id.signUpButton);
@@ -46,9 +53,9 @@ public class SignUp extends Activity implements View.OnClickListener{
         loginPageButton = (Button) findViewById(R.id.loginPageButton);
         loginPageButton.setOnClickListener(this);
         passwordConfirmEdit = (EditText) findViewById(R.id.passwordConfirmedEditText);
-        Firebase.setAndroidContext(this);
-        rootRef = new Firebase("https://liuqimintest.firebaseio.com/");
 
+        pDialog = new ProgressDialog(this);
+        pDialog.setCancelable(false);
     }
 
     @Override
@@ -75,42 +82,77 @@ public class SignUp extends Activity implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
+        Log.d("http", "onclick");
         if(v == signUpButton){
+            Log.d("http", "sign up button clicked");
             MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
+            //todo this is register
             String username = usernameEditText.getText().toString();
-            if(myDBHandler.findUser(username) != null){
-                Toast.makeText(this, "username already exist", Toast.LENGTH_LONG).show();
+            String password = passwordEditText.getText().toString();
+            if(password.equals(passwordConfirmEdit.getText().toString())) {
+                map.put("email", username);
+                map.put("name", "name");
+                map.put("password", password);
+                String va = " ";
+                //Online DB test
+                new Login().execute(va, va, va);
+
+                Toast.makeText(this, "Account error, might already exist", Toast.LENGTH_LONG).show();
+            }else{
+                Toast.makeText(this, "please confirm your password", Toast.LENGTH_LONG).show();
             }
-            else{
-                if(passwordEditText.getText().toString().equals(passwordConfirmEdit.getText().toString())) {
-                    User user = new User(usernameEditText.getText().toString(), passwordEditText.getText().toString());
-                    myDBHandler.addUser(user);
-                    user = myDBHandler.findUser(username);
-                    Toast.makeText(this, "new user id: " + user.getID() + " added", Toast.LENGTH_LONG).show();
 
-                    try {
-                       Firebase ref = rootRef.push();
-                        ref.setValue(user);
-
-                    }catch (Exception e){
-                        Log.d("Lifary", "Signup: failed to add user to online database ERROR: " + e.getLocalizedMessage());
-                    }
-                    // goes to user profile activity
-            /*        Intent i = new Intent(getApplicationContext(), UserProfileActivity.class);
-                    i.putExtra("USER_ID", user.getID());
-                    startActivity(i);
-
-                    */
-                }
-                else{
-                    Toast.makeText(this, "please confirm your password", Toast.LENGTH_LONG).show();
-                }
-            }
         }
         else if(v == loginPageButton){
             Intent i = new Intent(this, LoginActivity.class);
             startActivity(i);
         }
 
+    }
+
+    private class Login extends AsyncTask<String, String, String> {
+        HttpURLConnection urlc;
+        int result = -1;
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                ConnectionWithPost con = new ConnectionWithPost();
+                //String respond = con.uploadDiary(map, getString(R.string.REGISTER));
+                Message r = con.uploadDiary(map, getString(R.string.REGISTER), true);
+                if(r.getSuccess() == "1"){
+                    //Log.d("http", "respond:  " + r.getMessage());
+                    success = true;
+                    unique = r.getMessage();
+                    session.setLogin(true, unique);
+                    Log.d("http", "session set, unique id = " + session.get_uniqe_id());
+                    if (session.isLoggedIn()) {
+                        // User is already logged in. Take him to main activity
+                        //todo change to main act
+                        Intent intent = new Intent(SignUp.this,
+                                LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+
+                    return r.getMessage();
+                }
+                else
+                    return "ERROR";
+            }catch (Exception e){
+                e.printStackTrace();
+                Log.d("http","CONNECTION ERROR: " + "\t" + e.getLocalizedMessage());
+            }
+            return "ok";
+        }
+    }
+
+    private void showDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+    private void hideDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
     }
 }
