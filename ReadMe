@@ -1,0 +1,18 @@
+This is a diary app on android 4.1 or higher 
+(although it requirs lolipop in order to run the latest branch)
+currently working branch is -MySql
+
+How to use:
+  Download and run in Android Studio
+  One might need to upgrade their Android Studio to version 1.5 in order to successfully build
+  
+Funtionality:
+  user can record their life by audio/picture/text;
+  user can upload&&retrieve their diary to/from server;
+  user can share their diary to specific friends
+  
+To Do:
+  complete off-line mode that properly handle data that fail to upload to server;
+  implement friend group funtionality
+    so that user can share their diary with group of friends
+  talk to our UI see when she can be back and help :(
