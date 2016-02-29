@@ -2,11 +2,13 @@ package com.example.liuqimin.lifary;
 
 /**
  * Created by liuqimin on 15-07-04.
+ * @todo encrypt pw
+ * @todo get the stupid unique id auto set? or retrieve from server?
  */
 public class User {
 
     private int _id;
-    private String _unique;
+    private String _unique = null;
     private String _username;
     private String _password;
 
@@ -38,7 +40,6 @@ public class User {
     public void setPassword(String password){
         _password = password;
     }
-
     public String getPassword(){
         return _password;
     }

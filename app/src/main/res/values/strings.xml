@@ -41,7 +41,16 @@ Any other use of this code is forbidden.
     <string name="LOGIN">http://192.168.1.71:8000/wala/login.php</string>
     <string name="REGISTER">http://192.168.1.71:8000/wala/register.php</string>
 
-    <!-- DB -->
+    <!--
+        <string name="UPLOAD_DIARY">http://66.183.89.85:8000/wala/upload_diary.php</string>
+        <string name="DOWNLOAD_ALL_DIARIES_URL">http://66.183.89.85:8000/wala/get_all_diaries.php</string>
+        <string name="UPLOAD_FILE">http://66.183.89.85:8000/wala/UploadToServer.php</string>
+        <string name="UPLOAD_DIARY_URL">http://66.183.89.85:8000/wala/upload_diary.php</string>
+        <string name="DOWNLOAD_USER_DIARIES_URL">http://66.183.89.85:8000/wala/get_diary.php</string>
+        <string name="LOGIN">http://66.183.89.85:8000/wala/login.php</string>
+        <string name="REGISTER">http://66.183.89.85:8000/wala/register.php</string>
+      -->
+        <!-- DB -->
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="hint_name">Fullname</string>

@@ -26,7 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 
-public class DiaryView extends Activity implements View.OnClickListener, Communication{
+public class DiaryViewActivity extends Activity implements View.OnClickListener, Communication{
 
     Diary diary;
     TextView date, share, content, location;
@@ -102,7 +102,7 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
             Log.d("Lifary", "diary get the date: id = " + id);
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
             try {
-                diary = myDiaryDBHandler.findDiaryByID(id);
+                diary = myDiaryDBHandler.findDiaryByID(Integer.toString(id));
                 Log.d("Lifary", "found diary");
             }catch (Exception e){
                 Log.d("Lifary", "diary found ERROR: " + e.getLocalizedMessage());
@@ -203,7 +203,6 @@ public class DiaryView extends Activity implements View.OnClickListener, Communi
     {
         try
         {
-
             File path=new File(getCacheDir()+"/musicfile.3gp");
 
             FileOutputStream fos = new FileOutputStream(path);

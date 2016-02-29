@@ -10,6 +10,8 @@ import java.lang.reflect.Type;
 
 /**
  * Created by liuqi on 2015-10-31.
+ * GSon component:
+ *      Deserializer for  multiple diaries: convert them into an array of Diary objs.
  */
 public class DiariesDeserializer  implements JsonDeserializer<Diaries> {
 

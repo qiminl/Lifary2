@@ -26,17 +26,22 @@ public class UserProfileActivity extends Activity {
     ImageView qrCode;
     Button newDiaryButton;
     Button addFriendButton;
+    Button diaryListButton;
     User user;
     private SessionManager session;
     MyDBHandler myDBHandler;
     DiaryDBHandler diaryDBHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         session = new SessionManager(getApplicationContext());
 
         diaryDBHandler = new DiaryDBHandler(this, null, null, 1);
-
+        //SQLiteDatabase db = diaryDBHandler.getWritableDatabase();
+        //db.setVersion(2);
+        //Log.d("sqlite", "version: = " + db.getVersion());
+        //PRAGMA user_version = 2;
         setContentView(R.layout.activity_user_profile);
         usrProfile = (TextView) findViewById(R.id.usernameProfileText);
         addFriendButton = (Button) findViewById(R.id.addFriendButton);
@@ -55,13 +60,16 @@ public class UserProfileActivity extends Activity {
                 }
             }
         });
+
         qrCode = (ImageView) findViewById(R.id.QRcodeImg);
         int userID;
         if (savedInstanceState == null){
             Bundle extras = getIntent().getExtras();
             if(extras != null){
+                //@todo use unique id instead
                 userID = extras.getInt("USER_ID");
-                myDBHandler = new MyDBHandler(this, null, null, 1);
+                //@todo I forgot what is the factory in use for.
+                myDBHandler = new MyDBHandler(this, null);
                 user = myDBHandler.findUserByID(userID);
                 usrProfile.setText(user.getUsername());
             }
@@ -78,6 +86,20 @@ public class UserProfileActivity extends Activity {
                 startActivity(i);
             }
         });
+
+        /**
+         * starting diary list activity.
+         * @todo decide if it needs from result or use service.
+         */
+        diaryListButton = (Button) findViewById(R.id.diaryListButton);
+        diaryListButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getApplicationContext(), DiaryListActivity.class);
+                startActivity(i);
+            }
+        });
+
 
         try {
             String encodeUrl = URLEncoder.encode("" + user.getID());
@@ -96,6 +118,21 @@ public class UserProfileActivity extends Activity {
             Log.d("Lifary", "UserProfile: encode QRcode ERROR: " + e.getLocalizedMessage());
 
         }
+        /**
+         * Intent sendIntent = new Intent(Intent.ACTION_SEND);
+         ...
+
+         // Always use string resources for UI text.
+         // This says something like "Share this photo with"
+         String title = getResources().getString(R.string.chooser_title);
+         // Create intent to show the chooser dialog
+         Intent chooser = Intent.createChooser(sendIntent, title);
+
+         // Verify the original intent will resolve to at least one activity
+         if (sendIntent.resolveActivity(getPackageManager()) != null) {
+         startActivity(chooser);
+         }
+         */
 
     }
 
@@ -108,9 +145,11 @@ public class UserProfileActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        /**
+         * Handle action bar item clicks here. The action bar will
+         * automatically handle clicks on the Home/Up button, so long
+         * as you specify a parent activity in AndroidManifest.xml.
+         */
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -134,13 +173,19 @@ public class UserProfileActivity extends Activity {
         if( 1==requestCode && null!=data && data.getExtras()!=null ) {
             String result = data.getExtras().getString("la.droid.qr.result");
             int id = Integer.parseInt(result.toString());
-            MyDBHandler dbHandler = new MyDBHandler(this, null, null, 1);
+            MyDBHandler dbHandler = new MyDBHandler(this, null);
             User friend = dbHandler.findUserByID(id);
-            TextView frientText = (TextView ) findViewById(R.id.friendText);
-            frientText.setText(friend.getUsername());
+            TextView friendText = (TextView ) findViewById(R.id.friendText);
+            friendText.setText(friend.getUsername());
         }
     }
-
+    /* simple phone content
+    private void pickContact() {
+        Intent pickContactIntent = new Intent(Intent.ACTION_PICK, Uri.parse("content://contacts"));
+        pickContactIntent.setType(Phone.CONTENT_TYPE); // Show user only contacts w/ phone numbers
+        startActivityForResult(pickContactIntent, PICK_CONTACT_REQUEST);
+    }
+    */
     private class get_diaries extends AsyncTask<String, String, String>{
 
         @Override

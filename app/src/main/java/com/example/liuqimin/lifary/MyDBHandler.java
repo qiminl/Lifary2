@@ -22,8 +22,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_USERNAME = "username";
     public static final String COLUMN_PASSWORD = "password";
 
-    public MyDBHandler(Context context, String name,
-                       SQLiteDatabase.CursorFactory factory, int version) {
+    public MyDBHandler(Context context,SQLiteDatabase.CursorFactory factory) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
 
@@ -31,9 +30,9 @@ public class MyDBHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         //todo change to unique key
-        String CREATE_PRODUCTS_TABLE = "CREATE TABLE " +
+        String CREATE_PRODUCTS_TABLE = "CREATE TABLE IF NOT EXIST " +
                 TABLE_USERS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY," + COLUMN_USERNAME
+                + COLUMN_ID + " INTEGER UNIQUE PRIMARY KEY," + COLUMN_USERNAME
                 + " TEXT," + COLUMN_PASSWORD + " TEXT" + ")";
         db.execSQL(CREATE_PRODUCTS_TABLE);
         Log.d(DEBUG, "onCreate is called");
@@ -42,9 +41,10 @@ public class MyDBHandler extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
-        onCreate(db);
+        if(newVersion > oldVersion){
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
+            onCreate(db);
+        }
         Log.d(DEBUG, "onUpgrade is called");
     }
 
@@ -52,23 +52,24 @@ public class MyDBHandler extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         values.put(COLUMN_USERNAME, user.getUsername());
+        values.put(COLUMN_ID, user.get_unique());
+        //@todo pw should be encrypted
         values.put(COLUMN_PASSWORD, user.getPassword());
-
         SQLiteDatabase db = this.getWritableDatabase();
 
         db.insert(TABLE_USERS, null, values);
+
         db.close();
     }
 
     public User findUser(String username) {
-        String query = "Select * FROM " + TABLE_USERS + " WHERE " + COLUMN_USERNAME + " =  \"" + username + "\"";
+        String query = "Select * FROM " + TABLE_USERS +
+                " WHERE " + COLUMN_USERNAME + " =  \"" + username + "\"";
 
         SQLiteDatabase db = this.getWritableDatabase();
-
         Cursor cursor = db.rawQuery(query, null);
 
         User user = new User();
-
         if (cursor.moveToFirst()) {
             cursor.moveToFirst();
             user.setID(Integer.parseInt(cursor.getString(0)));
@@ -83,7 +84,8 @@ public class MyDBHandler extends SQLiteOpenHelper {
     }
 
     public User findUserByID(int id){
-        String query = "Select * FROM " + TABLE_USERS + " WHERE " + COLUMN_ID + " =  \"" + id + "\"";
+        String query = "Select * FROM " + TABLE_USERS +
+                " WHERE " + COLUMN_ID + " =  \"" + id + "\"";
 
         SQLiteDatabase db = this.getWritableDatabase();
 

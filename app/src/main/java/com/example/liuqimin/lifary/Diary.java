@@ -10,8 +10,11 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 /**
- * This is a class operates on Diary
  * Created by liuqimin on 15-07-07.
+ * Diary object class:
+ *      unique id in string;
+ *      data, text, image, sound all in string;
+ *      location data in float.
  */
 public class Diary {
 
@@ -29,49 +32,16 @@ public class Diary {
 
     //todo modify init stat - create a method to full init with content
     public Diary(int a){
-        Calendar c= Calendar.getInstance();
-        int seconds = c.get(Calendar.SECOND);
-        int minute = c.get(Calendar.MINUTE);
-        int hour = c.get(Calendar.HOUR);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-        int month = c.get(Calendar.MONTH);
-        int year = c.get(Calendar.YEAR);
-        date = month + "-" + day + "-" + year + "  " +
-                hour + ":" + minute + ":" + seconds;
-
-
-     //   img = null;
-        image = "";
-        imageurl = "a";
-        sound = "";
-        text = "a";
-        latitude = 0;
-        longitude = 0;
-        share = 0;
-        userid = "";
+        setDate();
+        image = sound = userid =""; imageurl = text = "a";
+        latitude = longitude = share = 0;
     }
     public Diary(String a){
-        Calendar c= Calendar.getInstance();
-        int seconds = c.get(Calendar.SECOND);
-        int minute = c.get(Calendar.MINUTE);
-        int hour = c.get(Calendar.HOUR);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-        int month = c.get(Calendar.MONTH);
-        int year = c.get(Calendar.YEAR);
-        date = month + "-" + day + "-" + year + "  " +
-                hour + ":" + minute + ":" + seconds;
-
-        this.id = a;
-        //   img = null;
-        image = "";
-        imageurl = "a";
-        sound = "";
-        text = "a";
-        latitude = 0;
-        longitude = 0;
-        share = 0;
-        userid = "";
+        setDate(); this.id = a;
+        image = sound = userid =""; imageurl = text = "a";
+        latitude = longitude = share = 0;
     }
+
 
 
     public void addContents(String contents){
@@ -119,6 +89,10 @@ public class Diary {
         share = s;
     }
     public void setDate(String date){this.date = date;}
+
+    /**
+     * mark the date of the system when diary is created.
+     */
     public void setDate(){
         Calendar c= Calendar.getInstance();
         int seconds = c.get(Calendar.SECOND);
@@ -180,6 +154,10 @@ public class Diary {
         System.out.println("imageurl:"+ imageurl);
     }
 
+    /**
+     * Converting for FireBase Diary helper.
+     * @todo  to be deleted;
+     */
     public void convert(DiaryHelper d){
         id = Double.toString(d.getId());
         date = d.getDate();
@@ -189,6 +167,12 @@ public class Diary {
         latitude = d.getLatitude();
         longitude = d.getLongitude();
         share = d.getShare();
+    }
+
+    public boolean hasImage(){
+        if(this.image.length() >= 10)
+            return true;
+        return false;
     }
 
     public HashMap<String, String> toHashMap(){
@@ -205,6 +189,7 @@ public class Diary {
         map.put("share",Integer.toString(this.share));
         map.put("image", this.image);
         map.put("imageurl", this.imageurl);
+        Log.d("http", "image url " + this.imageurl);
         map.put("sound", this.sound);
         map.put("userid",this.userid);
         Log.d("fb", "hash done");

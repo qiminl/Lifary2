@@ -183,7 +183,6 @@ public class ConnectionWithPost {
 
         /********** Test for file existence *********/
         if (!sourceFile.isFile()) {
-
             Log.e("uploadFile", "Source File not exist :"
                     + uploadFilePath + "" + uploadFileName);
             return "error";
@@ -235,10 +234,12 @@ public class ConnectionWithPost {
 
                 // Responses from the server (code and message)
                 serverResponseCode = conn.getResponseCode();
+                Log.d("http","server response code" + serverResponseCode);
                 String serverResponseMessage = conn.getResponseMessage();
                 if (serverResponseCode == 200) {
                     String msg = "File Upload Completed.\n\n See uploaded file here : \n\n"
                             +uploadFileName;
+                    Log.d("http", msg);
                     System.out.println("filepath: " + serverResponseMessage);
 
                     InputStream is = conn.getInputStream();
@@ -256,8 +257,10 @@ public class ConnectionWithPost {
                         object = gson.fromJson(result, Message.class);
                         //System.out.println("object message:" + object.getMessage());
                     }
-                    if (object.getSuccess().equals("1"))
+                    if (object.getSuccess().equals("1")) {
                         static_url = object.getMessage();
+                        Log.d("http", "static url: " + static_url);
+                    }
                 }
                 //close the streams //
                 fileInputStream.close();

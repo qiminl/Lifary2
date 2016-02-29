@@ -21,18 +21,19 @@
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
-        android:icon="@android:color/transparent"
+        android:icon="@drawable/appico"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
         <!-- List view of diary-->
         <activity
-            android:name=".DiaryList"
+            android:name=".DiaryListActivity"
             android:label="@string/app_name" >
         </activity>
 
@@ -76,10 +77,15 @@
 
         <!-- view of diary detail-->
         <activity
-            android:name=".DiaryView"
+            android:name=".DiaryViewActivity"
             android:label="@string/title_activity_diary_view" >
         </activity>
 
+        <!-- Service of networking-->
+        <service
+            android:name = ".OnlineService"
+            android:exported="false">  <!-- no outside app should use service-->
+        </service>
     </application>
 
 </manifest>

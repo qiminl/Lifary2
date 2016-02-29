@@ -49,12 +49,13 @@ public class DiaryViewRDB extends Activity implements View.OnClickListener, Comm
 
         Bundle extra = getIntent().getExtras();
         if(extra != null){
+            //@todo id needs to changed
             int id = extra.getInt("DIARY_ID");
             String url = extra.getString("ajslajl");
             Log.d("Lifary", "diary get the date: id = " + id);
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
             try {
-                diary = myDiaryDBHandler.findDiaryByID(id);
+                diary = myDiaryDBHandler.findDiaryByID(Integer.toString(id));
                 Log.d("Lifary", "found diary");
             }catch (Exception e){
                 Log.d("Lifary", "diary found ERROR: " + e.getLocalizedMessage());

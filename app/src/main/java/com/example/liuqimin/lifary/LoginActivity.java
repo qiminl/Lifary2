@@ -23,7 +23,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
     Button signupPageButton;
     private SessionManager session;
     private HashMap<String, String> map  = new HashMap<>();
-    private String unique = "";
+    private String unique_id = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,9 +79,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
             map.put("password", passwordEditText.getText().toString());
             String va = "";
             new Login().execute(va, va, va);
-
         }
-
     }
 
     private class Login extends AsyncTask<String, String, String> {
@@ -97,9 +95,9 @@ public class LoginActivity extends Activity implements View.OnClickListener{
                 if(r.getSuccess() == "1"){
                     //Log.d("http", "respond:  " + r.getMessage());
                     //success = true;
-                    unique = r.getMessage();
-                    session.setLogin(true, unique);
-                    Log.d("http", "session set, unique id = " + session.get_uniqe_id());
+                    unique_id = r.getMessage();
+                    session.setLogin(true, unique_id);
+                    Log.d("http", "session set, unique_id id = " + session.get_uniqe_id());
                     if (session.isLoggedIn()) {
                         // User is already logged in. Take him to main activity
                         Log.d("http", "is logged in: " + session.get_uniqe_id());

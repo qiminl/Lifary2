@@ -54,7 +54,9 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     public final static int RESULT_TAKE_PHOTO = 1;
     public final static int RESULT_LOAD_IMG = 2;
     private SessionManager session;
-    Diary d;
+    private String imagePath;
+    private Uri soundUri;
+    private Diary d;
 
     EditText diaryText;
     ImageButton cameraButton;
@@ -69,7 +71,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     Button submitButton;
 
     Bitmap bitmap;
-    private ProgressDialog pDialog;
     private static String mFileName = null;
     String imgDecodableString;
 
@@ -229,7 +230,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                     stopPlaying();
                 }
             }
-
             // -------------------- Delete SoundButton -------------------------------------------
         }else if(v == deleteSoundButton){
             Log.d("Lifary", "deleteSoundButton clicked");
@@ -246,13 +246,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 latitude = (float)currentLocation.getLatitude();
                 longtitude = (float)currentLocation.getLongitude();
                 String address = "(" + currentLocation.getLatitude() + ", " + currentLocation.getLongitude() + ")";
-
                 readLocation.getLocation(""+latitude, ""+longtitude);
-
-
-
                 Toast.makeText(getApplicationContext(), address, Toast.LENGTH_LONG).show();
-
             }else{
                 Toast.makeText(getApplicationContext(), "Unable to get address", Toast.LENGTH_LONG).show();
             }
@@ -345,36 +340,14 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             //todo figure out local db settings
             DiaryDBHandler myDiaryDBHandler = new DiaryDBHandler(this, null, null, 1);
             //Log.d(DEBUG, "try add Diary");
-            Log.d("http", "Diary db created");
             myDiaryDBHandler.addDiary(diary);
             Log.d("http", "Diary db added");
-            //Log.d(DEBUG, "diary add success!!!!~~~~");
-         //   Toast.makeText(this, "diary added success!!!!", Toast.LENGTH_LONG).show();
-            //not sure .. later
-            /*
-            Log.d(DEBUG, "test 1");
-            try {
-                Diary anotherDiary = myDiaryDBHandler.findDiaryByTime(diary.getDate());
-                Log.d(DEBUG, "test 2");
-                if(anotherDiary != null) {
-                    // go to diary view activity
-                    Log.d(DEBUG, "anotherDiary != null");
-                    Intent i = new Intent(this, DiaryView.class);
-                    i.putExtra("DIARY_ID", anotherDiary.getId());
-                    startActivity(i);
-                }else{
-                    Toast.makeText(this, "diary not found", Toast.LENGTH_LONG).show();
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-                Log.d(DEBUG, "cursor failed ERROR: " + "\t" + e.getLocalizedMessage());
-            }*/
 
-            diary.print();
             d = diary;
 
-            Log.d("http", "start connection" );
+            Log.d("http", "start connection");
             String response = " ";
+
             new uploadDiary().execute(response, response, response);
 
             if (response == "success" || flag == true) {
@@ -505,6 +478,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
                         cameraButton.setImageBitmap(bitmap);
 
+                        imagePath = imgDecodableString;
+                        Log.d(DEBUG, "image path:"+imagePath);
                         Log.d(DEBUG, "camera loads pic successfully");
                     } catch (Exception e) {
                         Log.d(DEBUG, "camera loads pic failed ERROR: " + e.getLocalizedMessage());
@@ -521,11 +496,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                     }
                     try {
                         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-
-
                         bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(),
                                 bitmapOptions);
-
                         cameraButton.setImageBitmap(bitmap);
 
                         String path = android.os.Environment
@@ -538,6 +510,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                         try {
                             outFile = new FileOutputStream(file);
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outFile);
+                            imagePath = file.getAbsolutePath();
                             outFile.flush();
                             outFile.close();
                         } catch (FileNotFoundException e) {
@@ -736,39 +709,53 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
         addressTextView.setText(contents);
     }
 
-    private class uploadDiary extends AsyncTask<String, String, String> {
+    /**
+     * AsyncTask for upload Diary.
+     */
+    private class uploadDiary extends AsyncTask<String, Integer, String> {
         HttpURLConnection urlc;
         int result = -1;
+
+        private final ProgressDialog pDialog = new ProgressDialog(EditDiaryActivity.this);
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            /*
-            pDialog = new ProgressDialog(EditDiaryActivity.this);
-            pDialog.setMessage("Loading products. Please wait...");
+            //@todo make it nice
+            pDialog.setMessage("Uploading files. Please wait...");
             pDialog.setIndeterminate(false);
             pDialog.setCancelable(false);
-            pDialog.show();*/
+            pDialog.show();
         }
 
         @Override
         protected String doInBackground(String... params) {
-
             Log.d("http", "test 3");
             try {
                 ConnectionWithPost con = new ConnectionWithPost();
+
+                //@todo need to upload image first
+                if (imagePath!= null){
+                    String temp  = con.uploadFile(imagePath);
+                    Log.d("http", "image path: "+ temp);
+                    d.setImageUrl(temp);
+                    d.setImage("");
+                }
                 HashMap<String, String> map = d.toHashMap();
                 //Log.d("http", map.toString());
-                //todo make it static
-                //String url = "http://192.168.1.71:8000/wala/upload_diary.php";
                 String url = getString(R.string.UPLOAD_DIARY_URL);
                 String respond = con.uploadDiary(map,url );
 
                 Log.d("http", "respond:  " + respond);
                 flag = true;
-
+                /*need looper prepare
+                Context i = getApplicationContext();
+                Toast.makeText(i, "You haven't picked Image",
+                        Toast.LENGTH_LONG).show();
+                */
                 //@todo try toasting a success message
                 Intent intent = new Intent(EditDiaryActivity.this,
-                        UserProfileActivity.class);
+                        DiaryListActivity.class);
                 startActivity(intent);
                 finish();
                 return "success";
@@ -778,20 +765,16 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             }
             flag = false;
             return "failed";
+            //return Main.this.register();
         }
 
-        //todo add progress bar
-        /**
-         * After completing background task Dismiss the progress dialog
-         * **/
         protected void onPostExecute(String file_url) {
             // dismiss the dialog after getting all products
-           // pDialog.dismiss();
+            if (this.pDialog.isShowing()) {
+                this.pDialog.dismiss();
+            }
         }
         protected void onPostExecute(Long result) {
         }
-
     }
-
-
 }
