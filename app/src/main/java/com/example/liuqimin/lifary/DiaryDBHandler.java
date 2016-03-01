@@ -87,7 +87,7 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
        long newRowId;
 
        /**
-        * @todo handle the stupid duplicate: practice DRAFT mach!!!!!!
+        * @todo handle the stupid duplicate: practice DRAFT !!!!!!
         * should test for difference
         */
        if(cursor.getCount()==1){
@@ -212,6 +212,7 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
      */
     public Diaries listOfDiary(int offset, int limit, String userid){
         //Log.d("sqlite", "loading diary");
+        //select number of "limit" diary starting from "offset" in descending order of DATE
         final String query = "Select * FROM " + TABLE_NAME +" WHERE "
                 + COLUMN_USERID + " = '" + userid
                 +"' ORDER BY "+ COLUMN_DATE+ " DESC "

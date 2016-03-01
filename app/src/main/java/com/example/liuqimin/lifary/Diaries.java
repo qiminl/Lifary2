@@ -7,6 +7,7 @@ import java.util.List;
  * Created by liuqi on 2015-10-31.
  */
 public class Diaries {
+    //@todo refactor it as List?
     private Diary[] diaries;
     private String success;
     private String message;

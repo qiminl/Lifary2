@@ -1,14 +1,24 @@
 package com.example.liuqimin.lifary;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 
 public class DiaryListActivity extends Activity implements AdapterView.OnItemClickListener {
@@ -21,6 +31,8 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
     private int numberOfDiaries;//number of diaries;
     private String userId;
     ListView lv;
+    List<Diary> diaryList;
+    StableArrayAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +56,22 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
             page = (int)temp +1;
         else
             page = (int)temp;
+        //retrive diaries.
+        diaries = diaryDBHandler.listOfDiary(0,NUMBER_PER_PAGE,userId);
+        Diary[] diary = diaries.loadDiaries();
+
 
         setContentView(R.layout.activity_diary_list);
         lv = (ListView) findViewById(R.id.dblist);
-        lv.setOnItemClickListener(this);
+        diaryList = new ArrayList<>();
+        for(Diary d :diary) {
+            d.print();
+            diaryList.add(d);
+        }
+        adapter = new StableArrayAdapter(this, android.R.layout.simple_list_item_1, diaryList);
+        lv.setAdapter(adapter);
 
-        //retrive diaries.
-        diaries = diaryDBHandler.listOfDiary(0,NUMBER_PER_PAGE,userId);
+        lv.setOnItemClickListener(this);
 
         //@todo change to listview loader to implement actual view
        // Diaries diaries = diaryDBHandler.listOfDiary(0, NUMBER_PER_PAGE,);
@@ -86,7 +107,61 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
     }
 
     @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+    public void onItemClick(AdapterView<?> adapterView, final View view, int position, long id) {
+
+        final String item = (String) adapterView.getItemAtPosition(position);
+        view.animate().setDuration(2000).alpha(0)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        diaryList.remove(item);
+                        adapter.notifyDataSetChanged();
+                        view.setAlpha(1);
+                    }
+                });
+    }
+
+    private class StableArrayAdapter extends ArrayAdapter<Diary> {
+        HashMap< Integer, Diary> mIdMap = new HashMap< Integer, Diary>();
+        private final Context context;
+
+        public StableArrayAdapter(Context context, int textViewResourceId,
+                                  List<Diary> diary) {
+            super(context, textViewResourceId, diary);
+            this.context = context;
+            for (int i = 0; i < diary.size(); ++i) {
+                mIdMap.put(i, diary.get(i));
+            }
+        }
+        /*
+        @Override
+        public long getItemId(int position) {
+            Diary item = getItem(position);
+            return mIdMap.get(item);
+        }*/
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) context
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            View rowView = inflater.inflate(R.layout.diary_list, parent, false);
+            TextView textView = (TextView) rowView.findViewById(R.id.diaryTextView1);
+            ImageView imageView = (ImageView) rowView.findViewById(R.id.diaryImageView1);
+
+            Diary diary = mIdMap.get(position);
+            textView.setText(diary.getDate());
+            if(diary.hasImage()) {
+                imageView.setImageBitmap(diary.getImgBitmap());
+            }
+            //MediaStore.Images.Media.insertImage(getContentResolver(), yourBitmap, yourTitle , yourDescription);
+
+            return rowView;
+        }
 
     }
+
 }

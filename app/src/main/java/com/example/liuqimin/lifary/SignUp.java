@@ -85,7 +85,7 @@ public class SignUp extends Activity implements View.OnClickListener{
         Log.d("http", "onclick");
         if(v == signUpButton){
             Log.d("http", "sign up button clicked");
-            MyDBHandler myDBHandler = new MyDBHandler(this, null, null, 1);
+            MyDBHandler myDBHandler = new MyDBHandler(this, null);
             //todo this is register
             String username = usernameEditText.getText().toString();
             String password = passwordEditText.getText().toString();
