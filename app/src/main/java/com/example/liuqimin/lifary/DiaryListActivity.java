@@ -70,7 +70,6 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
         }
         adapter = new StableArrayAdapter(this, android.R.layout.simple_list_item_1, diaryList);
         lv.setAdapter(adapter);
-
         lv.setOnItemClickListener(this);
 
         //@todo change to listview loader to implement actual view
@@ -107,17 +106,21 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
     }
 
     @Override
-    public void onItemClick(AdapterView<?> adapterView, final View view, int position, long id) {
+    public void onItemClick(AdapterView<?> adapterView, final View view, final int position, final long id) {
 
         final String item = (String) adapterView.getItemAtPosition(position);
         view.animate().setDuration(2000).alpha(0)
                 .withEndAction(new Runnable() {
                     @Override
                     public void run() {
+                        /*
                         diaryList.remove(item);
                         adapter.notifyDataSetChanged();
-                        view.setAlpha(1);
-                    }
+                        view.setthis);*/
+                        Intent intent = new Intent(DiaryListActivity.this,
+                                DiaryViewActivity.class);
+                        startActivity(intent);
+                       }
                 });
     }
 
@@ -152,6 +155,7 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
             TextView textView = (TextView) rowView.findViewById(R.id.diaryTextView1);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.diaryImageView1);
 
+            imageView.setAdjustViewBounds(true);//adjust ratio
             Diary diary = mIdMap.get(position);
             textView.setText(diary.getDate());
             if(diary.hasImage()) {
