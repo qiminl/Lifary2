@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.net.HttpURLConnection;
 import java.util.HashMap;
@@ -44,7 +45,15 @@ public class LoginActivity extends Activity implements View.OnClickListener{
 
         session = new SessionManager(getApplicationContext());
 
+        session.setLogin(false, "-1");
 
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        //into log in and Sign up page should log user out.
+        session.setLogin(false, "-1");
     }
 
     @Override
@@ -75,7 +84,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
             startActivity(i);
         }
         else if(v == loginButton){
-            map.put("email",  usernameEditText.getText().toString());
+            map.put("email", usernameEditText.getText().toString());
             map.put("password", passwordEditText.getText().toString());
             String va = "";
             new Login().execute(va, va, va);
@@ -92,7 +101,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
                 ConnectionWithPost con = new ConnectionWithPost();
                 //String respond = con.uploadDiary(map, getString(R.string.REGISTER));
                 Message r = con.uploadDiary(map, getString(R.string.LOGIN), true);
-                if(r.getSuccess() == "1"){
+                if(r.getSuccess().equals("1")){
                     //Log.d("http", "respond:  " + r.getMessage());
                     //success = true;
                     unique_id = r.getMessage();
@@ -101,13 +110,9 @@ public class LoginActivity extends Activity implements View.OnClickListener{
                     if (session.isLoggedIn()) {
                         // User is already logged in. Take him to main activity
                         Log.d("http", "is logged in: " + session.get_uniqe_id());
-
                         Intent i = new Intent(getApplicationContext(), UserProfileActivity.class);
                         startActivity(i);
-
-                        finish();
                     }
-
                     return r.getMessage();
                 }
                 else
@@ -118,6 +123,19 @@ public class LoginActivity extends Activity implements View.OnClickListener{
             }
             return "ok";
         }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (session.isLoggedIn()) {
+                Log.d("http", "you are in???? somethings wrong then");
+            }
+            else{
+                Log.d("http", "you stupid shit enter the wrong info yo!");
+                Toast.makeText(LoginActivity.this, "Wrong info, please try again", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+
     }
 
 }

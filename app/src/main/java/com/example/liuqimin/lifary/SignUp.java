@@ -110,6 +110,13 @@ public class SignUp extends Activity implements View.OnClickListener{
 
     }
 
+    @Override
+    protected void onResume(){
+        super.onResume();
+        //into log in and Sign up page should log user out.
+        session.setLogin(false, "-1");
+    }
+
     private class Login extends AsyncTask<String, String, String> {
         HttpURLConnection urlc;
         int result = -1;
@@ -120,7 +127,7 @@ public class SignUp extends Activity implements View.OnClickListener{
                 ConnectionWithPost con = new ConnectionWithPost();
                 //String respond = con.uploadDiary(map, getString(R.string.REGISTER));
                 Message r = con.uploadDiary(map, getString(R.string.REGISTER), true);
-                if(r.getSuccess() == "1"){
+                if(r.getSuccess().equals("1")){
                     //Log.d("http", "respond:  " + r.getMessage());
                     success = true;
                     unique = r.getMessage();
@@ -134,7 +141,6 @@ public class SignUp extends Activity implements View.OnClickListener{
                         startActivity(intent);
                         finish();
                     }
-
                     return r.getMessage();
                 }
                 else
@@ -144,6 +150,17 @@ public class SignUp extends Activity implements View.OnClickListener{
                 Log.d("http","CONNECTION ERROR: " + "\t" + e.getLocalizedMessage());
             }
             return "ok";
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            if (session.isLoggedIn()) {
+                Log.d("http", "you are in????");
+            }
+            else{
+                //@todo handle more exceptions.
+                Log.d("http", "you stupid shit enter the wrong info yo!");
+                Toast.makeText(SignUp.this, "Wrong info, please try again", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
