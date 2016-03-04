@@ -27,23 +27,21 @@ public class Diary {
    // private byte[] sound;
     private String image;
     private String imageurl;
+    private String imageUri;//local uri of image
     private String sound;
     private String userid;
 
     //todo modify init stat - create a method to full init with content
     public Diary(int a){
         setDate();
-        image = sound = userid =""; imageurl = text = "a";
+        image = sound = userid =""; imageurl = text = imageUri="-1";
         latitude = longitude = share = 0;
     }
     public Diary(String a){
         setDate(); this.id = a;
-        image = sound = userid =""; imageurl = text = "a";
+        image = sound = userid =""; imageurl = text = imageUri="-1";
         latitude = longitude = share = 0;
     }
-
-
-
     public void addContents(String contents){
         text = contents;
     }
@@ -59,7 +57,7 @@ public class Diary {
     }
     public void addImage(Bitmap bmp){
 
-        byte[] img = null;
+        byte[] img;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.PNG, 100, os);
         img = os.toByteArray();
@@ -107,8 +105,6 @@ public class Diary {
     public void setId(double i){this.id = Double.toString(i);}
     public void setId(String i){this.id =i;}
     public void setUserid(String diaryid){this.userid = diaryid;}
-
-
     public double getId(){ return Double.parseDouble(this.id);}
     public String getDate(){return date;}
     public String getContent(){return text;}
@@ -116,12 +112,12 @@ public class Diary {
     public float getLongitude(){return longitude;}
     public int getShare(){return share;}
     public byte[] getImg(){
-            byte[] img = null;
+            byte[] img;
             img = Base64.decode(image,Base64.DEFAULT);
         return img;
     }
     public byte[] getAudio(){
-        byte[] soundByte = null;
+        byte[] soundByte;
         soundByte = Base64.decode(sound,Base64.DEFAULT);
         return soundByte;
     }
@@ -156,7 +152,7 @@ public class Diary {
 
     /**
      * Converting for FireBase Diary helper.
-     * @todo  to be deleted;
+     * todo  to be deleted;
      */
     public void convert(DiaryHelper d){
         id = Double.toString(d.getId());
@@ -168,13 +164,16 @@ public class Diary {
         longitude = d.getLongitude();
         share = d.getShare();
     }
-
     public boolean hasImage(){
-        if(this.image.length() >= 10)
-            return true;
-        return false;
+        //simplified if.
+        return this.image.length() >= 10;
     }
-
+    public void setImageUri(String imagePath){
+        imageUri = imagePath;
+    }
+    public String getImageUri(){
+        return imageUri;
+    }
     public HashMap<String, String> toHashMap(){
         HashMap<String, String> map = new HashMap<>();
 
@@ -191,7 +190,10 @@ public class Diary {
         map.put("imageurl", this.imageurl);
         Log.d("http", "image url " + this.imageurl);
         map.put("sound", this.sound);
-        map.put("userid",this.userid);
+        map.put("userid", this.userid);
+        map.put("imageUri",this.imageUri);
+
+        Log.d("http", "imageUri " + map.get("imageUri"));
         Log.d("fb", "hash done");
         return map;
     }

@@ -40,7 +40,7 @@ public class SignUp extends Activity implements View.OnClickListener{
         /*
         if (session.isLoggedIn()) {
             // User is already logged in. Take him to main activity
-            //todo change to main act
+            //todo change to main act; should change for every resume
             Intent intent = new Intent(SignUp.this,
                     LoginActivity.class);
             startActivity(intent);

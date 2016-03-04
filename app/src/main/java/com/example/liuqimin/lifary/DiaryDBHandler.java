@@ -29,54 +29,51 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_LONGITUDE = "longitude";
     public static final String COLUMN_SHARE = "share";
     public static final String COLUMN_IMAGE = "img";
-    public static final String COLUMN_IMAGE_URL = "imgurl";
+    public static final String COLUMN_IMAGE_URL = "imageurl";
 
     public static final String COLUMN_SOUND = "sound";
     public static final String COLUMN_DATE = "date";
     public static final String COLUMN_USERID = "userid";
+    public static final String COLUMN_IMAGE_URI = "imageUri";
 
     /**
     * diary format:
-    *           0:COLUMN_ID, 1:COLUMN_TEXT, 2:COLUMN_USERID 3:COLUMN_LATITUDE,
-    *           4:COLUMN_LONGITUDE, 5:COLUMN_SHARE, 6:COLOMN_DATE, 7:COLUMN_IMAGE_URL,
-    *           8:COLUMN_IMAGE, 9:COLUMN_SOUND
+    *           0:COLUMN_ID,TEXT PRIMARY KEY 1:COLUMN_TEXT,TEXT 2:COLUMN_USERID,TEXT
+    *           3:COLUMN_LATITUDE,REAL 4:COLUMN_LONGITUDE,REAL 5:COLUMN_SHARE,INTEGER
+    *           6:COLOMN_DATE,TEXT 7:COLUMN_IMAGE_URL,TEXT 8:COLUMN_IMAGE,BLOB
+    *           9:COLUMN_SOUND,BLOB 10:COLUMN_IMAGE_URI,TEXT
     * */
-
-
     public DiaryDBHandler(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         System.out.println("context: " + context.toString());
     }
-
     //@todo I suppose this is to manually update db && curse around
     public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
-
     public DiaryDBHandler(Context context, String name, SQLiteDatabase.CursorFactory factory,
                           int version, DatabaseErrorHandler errorHandler) {
         super(context, name, factory, version, errorHandler);
     }
-
     @Override
     public void onCreate(SQLiteDatabase db) {
         //db.execSQL("DROP TABLE IF EXISTS '" + TABLE_NAME +"'");
-        final String CREATE_DIARY_TABLE = "CREATE TABLE IF NOT EXISTS " +
-                TABLE_NAME + " ("
+        final String CREATE_DIARY_TABLE = "CREATE TABLE IF NOT EXISTS "
+                + TABLE_NAME + " ("
                 + COLUMN_ID + " TEXT PRIMARY KEY," + COLUMN_TEXT+ " TEXT,"
-                + COLUMN_USERID + " TEXT, "+COLUMN_LATITUDE + " REAL, " + COLUMN_LONGITUDE
-                +" REAL,"+ COLUMN_SHARE + " INTEGER," + COLUMN_DATE + " TEXT, "
-                + COLUMN_IMAGE_URL +" TEXT,"+ COLUMN_IMAGE+" BLOB,"+ COLUMN_SOUND + " BLOB "+")";
+                + COLUMN_USERID + " TEXT, "+COLUMN_LATITUDE + " REAL, "
+                + COLUMN_LONGITUDE +" REAL,"+ COLUMN_SHARE + " INTEGER,"
+                + COLUMN_DATE + " TEXT, " + COLUMN_IMAGE_URL +" TEXT,"
+                + COLUMN_IMAGE+" BLOB,"+ COLUMN_SOUND + " BLOB, "
+                + COLUMN_IMAGE_URI + " TEXT" + " )";
         db.execSQL(CREATE_DIARY_TABLE);
     }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME );
         onCreate(db);
     }
-
-   public long addDiary(Diary diary){
+    public long addDiary(Diary diary){
 
        //acquire access of writing to db
        SQLiteDatabase db = this.getWritableDatabase();
@@ -106,7 +103,7 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
            values.put(COLUMN_LONGITUDE, diary.getLongitude());
            values.put(COLUMN_SHARE, diary.getShare());
            values.put(COLUMN_USERID,diary.getUserid());
-
+           values.put(COLUMN_IMAGE_URI,diary.getImageUri());
            //System.out.println("db path: " + db.getPath());
            newRowId  = db.insert(TABLE_NAME, null, values);
            System.out.println("row id = " + newRowId);
@@ -116,7 +113,6 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
        db.close();
        return newRowId;
    }
-
     public Diary findDiaryByID(String id){
         String query = "Select * FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = \"" + id + "\"";
         SQLiteDatabase db = this.getWritableDatabase();
@@ -125,13 +121,16 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
 
         if (cursor.moveToFirst()) {
             cursor.moveToFirst();
-            diary.setId(Integer.parseInt(cursor.getString(0)));
+            diary.setId(cursor.getString(0));
+            diary.setUserid(cursor.getString(2));
             diary.addContents(cursor.getString(1));
-            diary.addLocation(cursor.getFloat(2), cursor.getFloat(3));
-            diary.setShare(cursor.getInt(4));
-            diary.setDate(cursor.getString(5));
-            diary.setImageByByte(cursor.getBlob(6));
-            diary.setAudioByte(cursor.getBlob(7));
+            diary.addLocation(cursor.getFloat(3), cursor.getFloat(4));
+            diary.setShare(cursor.getInt(5));
+            diary.setDate(cursor.getString(6));
+            diary.setImageUrl(cursor.getString(7));
+            diary.setImageByByte(cursor.getBlob(8));
+            diary.setAudioByte(cursor.getBlob(9));
+            diary.setImageUri(cursor.getString(10));
             cursor.close();
             Log.d("Lifary", "close");
         } else {
@@ -228,7 +227,7 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             //fill in the table with
             cursor.moveToFirst();
-            while (cursor.isAfterLast() == false) {
+            while (!cursor.isAfterLast() ) {
                 diary.setId(cursor.getString(0));
                 diary.setUserid(cursor.getString(2));
                 diary.addContents(cursor.getString(1));
@@ -238,6 +237,8 @@ public class DiaryDBHandler extends SQLiteOpenHelper {
                 diary.setImageUrl(cursor.getString(7));
                 diary.setImageByByte(cursor.getBlob(8));
                 diary.setAudioByte(cursor.getBlob(9));
+                diary.setImageUri(cursor.getString(10));
+
                 diaries.add(diary);
                 cursor.moveToNext();
             }

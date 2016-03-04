@@ -21,7 +21,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
     EditText usernameEditText;
     EditText passwordEditText;
     Button loginButton;
-    Button signupPageButton;
+    Button signUpPageButton;
     private SessionManager session;
     private HashMap<String, String> map  = new HashMap<>();
     private String unique_id = "";
@@ -40,8 +40,8 @@ public class LoginActivity extends Activity implements View.OnClickListener{
         passwordEditText = (EditText) findViewById(R.id.passwordEditText);
         loginButton = (Button) findViewById(R.id.logInButton);
         loginButton.setOnClickListener(this);
-        signupPageButton = (Button) findViewById(R.id.signUpPageButton);
-        signupPageButton.setOnClickListener(this);
+        signUpPageButton = (Button) findViewById(R.id.signUpPageButton);
+        signUpPageButton.setOnClickListener(this);
 
         session = new SessionManager(getApplicationContext());
 
@@ -79,7 +79,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
-        if (v == signupPageButton){
+        if (v == signUpPageButton){
             Intent i = new Intent(this, SignUp.class);
             startActivity(i);
         }

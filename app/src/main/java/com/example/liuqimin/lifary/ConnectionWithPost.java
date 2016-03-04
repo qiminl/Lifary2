@@ -85,9 +85,11 @@ public class ConnectionWithPost {
                 OutputStreamWriter osWriter = new OutputStreamWriter(os,
                         "UTF-8");
                 BufferedWriter writer = new BufferedWriter(osWriter);
-                writer.write(getPostData(values));
 
-                System.out.println("writer post data: " +getPostData(values));
+                Log.d(DEBUG_HTTP, "b/4 get post data");
+                writer.write(getPostData(values));
+                Log.d(DEBUG_HTTP, "b/4 after data" + getPostData(values));
+                //System.out.println("writer post data: " +getPostData(values));
                 writer.flush();
                 writer.close();
                 os.close();
@@ -150,12 +152,14 @@ public class ConnectionWithPost {
                 builder.append("&");
 
             try {
+                //Log.d("http", "key = " +entry.getKey());
                 builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
                 builder.append("=");
+                //Log.d("http", "value = " + entry.getValue());
                 builder.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
             } catch (UnsupportedEncodingException e) {
+                //Log.d("http", "error : " + e.toString());
             }
-
         }
         return builder.toString();
     }
@@ -171,8 +175,8 @@ public class ConnectionWithPost {
 
         String fileName = sourceFileUri;
 
-        HttpURLConnection conn = null;
-        DataOutputStream dos = null;
+        HttpURLConnection conn ;
+        DataOutputStream dos ;
         String lineEnd = "\r\n";
         String twoHyphens = "--";
         String boundary = "*****";
@@ -300,11 +304,12 @@ public class ConnectionWithPost {
         URL url = new URL(DOWNLOAD_ALL_DIARIES_URL);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
+            //todo handle static
             if (urlConnection.getResponseCode() ==urlConnection.HTTP_OK)
                 System.out.println(urlConnection.getResponseMessage());
 
             DataInputStream dis =new DataInputStream(urlConnection.getInputStream());
-            StringBuffer inputLine = new StringBuffer();
+            StringBuffer inputLine = new StringBuffer();//todo use StringBuilder instead?
 
             while ((tmp = dis.readLine()) != null) {
                 inputLine.append(tmp);
@@ -348,7 +353,8 @@ public class ConnectionWithPost {
         String tmp = "";
         Log.d("http", "user id = " + user_id);
         //URL url = new URL("http://192.168.1.71:8000/wala/get_all_products.php");
-        URL url = new URL(DOWNLOAD_USER_DIARIES_URL);
+
+        URL url = new URL(DOWNLOAD_USER_DIARIES_URL); //get_diary.php
         conn = (HttpURLConnection) url.openConnection();
         conn.setReadTimeout(10000);
         conn.setConnectTimeout(15000);
@@ -384,7 +390,6 @@ public class ConnectionWithPost {
                     System.out.println(tmp);
                 }
                 String rs = inputLine.toString();
-
 
                 Log.d("http", "respond message: \n" + rs);
                 /*

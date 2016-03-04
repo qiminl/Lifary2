@@ -2,8 +2,8 @@ package com.example.liuqimin.lifary;
 
 /**
  * Created by liuqimin on 15-07-04.
- * @todo encrypt pw
- * @todo get the stupid unique id auto set? or retrieve from server?
+ * todo encrypt pw
+ * todo get the stupid unique id auto set? or retrieve from server?
  */
 public class User {
 
@@ -11,6 +11,7 @@ public class User {
     private String _unique = null;
     private String _username;
     private String _password;
+    private String updateNumbers; // use to identify if need to update table.
 
     public User(){}
 
@@ -25,12 +26,8 @@ public class User {
         _password = password;
     }
 
-    public void setID(int id){
-        _id = id;
-    }
-    public int getID(){
-        return _id;
-    }
+    public void setID(int id){ _id = id;}
+    public int getID(){ return _id; }
     public void setUsername(String username){
         _username = username;
     }
@@ -45,5 +42,7 @@ public class User {
     }
     public void set_unique(String unique){_unique = unique;}
     public String get_unique(){return _unique;}
+    public void setUpdateNumbers(String unique){updateNumbers = unique;}
+    public String getUpdateNumbers(){return updateNumbers;}
 
 }

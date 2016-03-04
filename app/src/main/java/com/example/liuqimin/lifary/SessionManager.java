@@ -1,6 +1,7 @@
 package com.example.liuqimin.lifary;
 
 /**
+ * This Session manager user SharedPreference to manage user
  * Created by liuqi on 2015-10-12.
  */
 import android.content.Context;
@@ -24,7 +25,7 @@ public class SessionManager {
     // Shared preferences file name
     private static final String PREF_NAME = "Login";
 
-    private static final String KEY_IS_LOGGEDIN = "isLoggedIn";
+    private static final String KEY_IS_LOGIN = "isLoggedIn";
     private static final String UNIQUE_ID = "unique_id";
 
     public SessionManager(Context context) {
@@ -35,7 +36,7 @@ public class SessionManager {
 
     public void setLogin(boolean isLoggedIn, String unique_id) {
 
-        editor.putBoolean(KEY_IS_LOGGEDIN, isLoggedIn);
+        editor.putBoolean(KEY_IS_LOGIN, isLoggedIn);
         if(isLoggedIn)
             editor.putString(UNIQUE_ID,unique_id );
         else
@@ -47,7 +48,7 @@ public class SessionManager {
     }
 
     public boolean isLoggedIn(){
-        return pref.getBoolean(KEY_IS_LOGGEDIN, false);
+        return pref.getBoolean(KEY_IS_LOGIN, false);
     }
 
     public String get_uniqe_id(){

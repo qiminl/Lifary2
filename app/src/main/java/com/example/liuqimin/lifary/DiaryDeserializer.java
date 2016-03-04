@@ -7,6 +7,8 @@ package com.example.liuqimin.lifary;
  */
 
 
+import android.util.Log;
+
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -33,7 +35,9 @@ public class DiaryDeserializer implements JsonDeserializer<Diary> {
         final String imageurl = jsonObject.get("imageurl").getAsString();
         final String audio = jsonObject.get("sound").getAsString();
         final String userid = jsonObject.get("userid").getAsString();
-
+        //Log.d("http","getAsString() till imageUri");
+        final String imageUri = jsonObject.get("imageUri").getAsString();
+        //Log.d("http","getAsString() finished upon imageUri");
         /*
         final JsonArray jsonAuthorsArray = jsonObject.get("authors").getAsJsonArray();
         final String[] authors = new String[jsonAuthorsArray.size()];
@@ -52,7 +56,9 @@ public class DiaryDeserializer implements JsonDeserializer<Diary> {
         d.setDate(date);
         d.setImageUrl(imageurl);
         d.setUserid(userid);
+        d.setImageUri(imageUri);
 
+        Log.d("http", "diary d deserialize finished");
         return d;
     }
 

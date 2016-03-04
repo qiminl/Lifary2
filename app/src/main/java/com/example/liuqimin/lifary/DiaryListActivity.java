@@ -3,6 +3,7 @@ package com.example.liuqimin.lifary;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -119,6 +120,7 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
                         view.setthis);*/
                         Intent intent = new Intent(DiaryListActivity.this,
                                 DiaryViewActivity.class);
+                        intent.putExtra("diary_id","diary_id");
                         startActivity(intent);
                        }
                 });
@@ -129,11 +131,11 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
         private final Context context;
 
         public StableArrayAdapter(Context context, int textViewResourceId,
-                                  List<Diary> diary) {
-            super(context, textViewResourceId, diary);
+                                  List<Diary> diary_list) {
+            super(context, textViewResourceId, diary_list);
             this.context = context;
-            for (int i = 0; i < diary.size(); ++i) {
-                mIdMap.put(i, diary.get(i));
+            for (int i = 0; i < diary_list.size(); ++i) {
+                mIdMap.put(i, diary_list.get(i));
             }
         }
         /*
@@ -154,10 +156,15 @@ public class DiaryListActivity extends Activity implements AdapterView.OnItemCli
             View rowView = inflater.inflate(R.layout.diary_list, parent, false);
             TextView textView = (TextView) rowView.findViewById(R.id.diaryTextView1);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.diaryImageView1);
-
             imageView.setAdjustViewBounds(true);//adjust ratio
+
             Diary diary = mIdMap.get(position);
             textView.setText(diary.getDate());
+            if(diary.getImageUri() != null){
+                Uri uri = Uri.parse(diary.getImageUri());
+                imageView.setImageURI(uri);
+            }
+
             if(diary.hasImage()) {
                 imageView.setImageBitmap(diary.getImgBitmap());
             }

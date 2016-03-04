@@ -166,13 +166,16 @@ public class UserProfileActivity extends Activity {
 
         if( 0==requestCode && null!=data && data.getExtras()!=null ) {
             String qrcodeImgPath = data.getExtras().getString("la.droid.qr.result");
-            Uri imgPath = Uri.fromFile(new File(qrcodeImgPath));
-            qrCode.setImageURI(imgPath);
+            if(qrcodeImgPath !=null){ //todo handel null qr code
+                Uri imgPath = Uri.fromFile(new File(qrcodeImgPath));
+                qrCode.setImageURI(imgPath);
+            }
         }
 
         if( 1==requestCode && null!=data && data.getExtras()!=null ) {
+            //todo handle null exception
             String result = data.getExtras().getString("la.droid.qr.result");
-            int id = Integer.parseInt(result.toString());
+            int id = Integer.parseInt(result);
             MyDBHandler dbHandler = new MyDBHandler(this, null);
             User friend = dbHandler.findUserByID(id);
             TextView friendText = (TextView ) findViewById(R.id.friendText);
@@ -190,9 +193,11 @@ public class UserProfileActivity extends Activity {
 
         @Override
         protected String doInBackground(String... params) {
+            if(session.isLoggedIn()){
             try {
                 ConnectionWithPost con = new ConnectionWithPost();
                 Diaries diaries = con.getUserDiaries(session.get_uniqe_id());
+                Log.d("http", "diaries successfully acquired");
                 Diary diary[] = diaries.loadDiaries();
                 for (Diary result : diary){
                     diaryDBHandler.addDiary(result);
@@ -202,6 +207,7 @@ public class UserProfileActivity extends Activity {
 
                 //todo handle error
                 Log.d("http", "CONNECTION ERROR during get all diaries:  " + "\t" + e.getLocalizedMessage());
+            }
             }
             return null;
         }

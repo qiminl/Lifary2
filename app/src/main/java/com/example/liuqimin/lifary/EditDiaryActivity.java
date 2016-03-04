@@ -183,7 +183,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
@@ -207,13 +206,12 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             Log.d("Lifary", "deleteImageButton clicked");
             cameraButton.setImageResource(R.drawable.camera);
             bitmap =null;
-
             // ------------- Record Sound Button -------------------------------------------
         }else if(v == soundButton){
             Log.d("Lifary", "soundButton clicked");
             // if it is recording, then stop
-            if(isPlaying == false) {
-                if (isRecording == false) {
+            if(!isPlaying) {
+                if (!isRecording) {
                     startRecording();
                 } else {  // else then start
                     stopRecording();
@@ -223,8 +221,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             // -------------------- play Audio Button -----------------------------------------------
         }else if(v == playButton){
             Log.d(DEBUG, "playButton clicked");
-            if(isRecorded == true && isRecording == false) {
-                if (isPlaying == false) {
+            if(isRecorded && !isRecording ) {
+                if (!isPlaying) {
                     startPlaying();
                 } else {
                     stopPlaying();
@@ -233,7 +231,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             // -------------------- Delete SoundButton -------------------------------------------
         }else if(v == deleteSoundButton){
             Log.d("Lifary", "deleteSoundButton clicked");
-            if(isRecorded == true && isRecording == false){
+            if(isRecorded  && !isRecording ){
                 initializeFile();
                 isRecorded = false;
             }
@@ -261,15 +259,11 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
             // ---------------- Submit Button ---------------------
         }else if(v == submitButton){
-
-
             Log.d(DEBUG, "submitButton clicked");
-
+            //@todo auto increment Diary ID
             Diary diary = new Diary(0);
-
             // add text to diary
             diary.addContents(diaryText.getText().toString());
-
             // add location
             diary.addLocation(latitude, longtitude);
             Calendar c= Calendar.getInstance();
@@ -350,7 +344,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
 
             new uploadDiary().execute(response, response, response);
 
-            if (response == "success" || flag == true) {
+            if (response.equals("success" )|| flag) {
                 Log.d("http", "connection fine");
 
                 Toast.makeText(this, "Upload Finished!",
@@ -361,7 +355,7 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 startActivity(intent);
                 finish();
             }
-            else if(response == "failed" || flag == false) {
+            else if(response.equals("failed") || !flag) {
                 Log.d("http", "connection nooooo wut?");
             }
 
@@ -385,8 +379,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
     private Location getLastBestLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) == false
-                && locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == false){
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                && !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
 
             buildAlertMessageNoGps();
             return null;
@@ -394,16 +388,13 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
         else {
             Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             Location locationNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
             long GPSLocationTime = 0;
             if (locationGPS != null) {
                 GPSLocationTime = locationGPS.getTime();
                 Log.d(DEBUG, "GPS location != null");
-            } else                 Log.d(DEBUG, "GPS location == null");
-
-
+            } else
+                Log.d(DEBUG, "GPS location == null");
             long NetLocationTime = 0;
-
             if (locationNet != null) {
                 NetLocationTime = locationNet.getTime();
                 Log.d(DEBUG, "Net location != null");
@@ -451,7 +442,6 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
             if (resultCode == RESULT_OK) {
                 if (requestCode == RESULT_LOAD_IMG && data!=null) {
                     // Get the Image from dataå
-
                     Uri selectedImage = data.getData();
                     String[] filePathColumn = {MediaStore.Images.Media.DATA};
 
@@ -459,6 +449,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                     Cursor cursor = getContentResolver().query(selectedImage,
                             filePathColumn, null, null, null);
                     // Move to first row
+
+                    //todo handle null exception
                     cursor.moveToFirst();
 
                     int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
@@ -466,15 +458,17 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                     Log.d(DEBUG, "imDecodableString = " + imgDecodableString);
                     cursor.close();
                     try {
-
                         bitmap = BitmapFactory.decodeFile(imgDecodableString);
-                        Log.d(DEBUG, "EditDiary: bitmap.getHeight = " + bitmap.getHeight() + "\tbitmap.getWidth = " + bitmap.getWidth() );
+                        Log.d(DEBUG, "EditDiary: bitmap.getHeight = " + bitmap.getHeight()
+                                + "\tbitmap.getWidth = " + bitmap.getWidth() );
+                        //@todo 512.0 should not be static.
                         int nh = (int) ( bitmap.getHeight() * (512.0 / bitmap.getWidth()) );
-                        Log.d(DEBUG, "EditDiary: nh = " + nh +
-                                " result = " + (int)( bitmap.getHeight() * (512 / bitmap.getWidth()))  +
-                                " result 2 = " +( bitmap.getHeight()*(512/bitmap.getWidth())));
+                        Log.d(DEBUG, "EditDiary: nh = " + nh
+                                + " result = " + ( bitmap.getHeight() * (512 / bitmap.getWidth()))
+                                + " result 2 = " +( bitmap.getHeight()*(512/bitmap.getWidth())));
                         bitmap = Bitmap.createScaledBitmap(bitmap, 512, nh, true);
-                        Log.d(DEBUG, "EditDiary: new bitmap.getHeight = " + bitmap.getHeight() + "\tbitmap.getWidth = " + bitmap.getWidth() );
+                        Log.d(DEBUG, "EditDiary: new bitmap.getHeight = " + bitmap.getHeight()
+                                + "\tbitmap.getWidth = " + bitmap.getWidth() );
 
                         cameraButton.setImageBitmap(bitmap);
 
@@ -504,8 +498,8 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                                 .getExternalStorageDirectory()
                                 + File.separator
                                 + "Phoenix" + File.separator + "default";
-                        f.delete();
-                        OutputStream outFile = null;
+                        f.delete();//todo handle return
+                        OutputStream outFile;
                         File file = new File(path, String.valueOf(System.currentTimeMillis()) + ".jpg");
                         try {
                             outFile = new FileOutputStream(file);
@@ -737,8 +731,10 @@ public class EditDiaryActivity extends Activity implements View.OnClickListener,
                 //@todo need to upload image first
                 if (imagePath!= null){
                     String temp  = con.uploadFile(imagePath);
-                    Log.d("http", "image path: "+ temp);
+                    Log.d("http", "image url: " + temp);
                     d.setImageUrl(temp);
+                    Log.d("http", "image path: " + imagePath);
+                    d.setImageUri(imagePath);
                     d.setImage("");
                 }
                 HashMap<String, String> map = d.toHashMap();

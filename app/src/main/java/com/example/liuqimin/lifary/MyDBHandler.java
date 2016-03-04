@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 /**
+ * Local SQLite of users profile
  * Created by liuqimin on 15-07-04.
  */
 public class MyDBHandler extends SQLiteOpenHelper {
@@ -21,10 +22,17 @@ public class MyDBHandler extends SQLiteOpenHelper {
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_USERNAME = "username";
     public static final String COLUMN_PASSWORD = "password";
+    public static final String COLUMN_UPDATE_NUMBERS = "updateNumbers";
 
     public MyDBHandler(Context context,SQLiteDatabase.CursorFactory factory) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
+
+    /**
+     * User format:
+     *           0:COLUMN_ID,INTEGER UNIQUE PRIMARY KEY 1:COLUMN_USERNAME,TEXT
+     *           2:COLUMN_PASSWORD,TEXT 3:COLUMN_UPDATE_NUMBERS,DOUBLE
+     * */
 
 
     @Override
@@ -32,8 +40,8 @@ public class MyDBHandler extends SQLiteOpenHelper {
         //todo change to unique key
         String CREATE_PRODUCTS_TABLE = "CREATE TABLE IF NOT EXIST " +
                 TABLE_USERS + "("
-                + COLUMN_ID + " INTEGER UNIQUE PRIMARY KEY," + COLUMN_USERNAME
-                + " TEXT," + COLUMN_PASSWORD + " TEXT" + ")";
+                + COLUMN_ID + " INTEGER UNIQUE PRIMARY KEY, " + COLUMN_USERNAME
+                + " TEXT, " + COLUMN_PASSWORD + " TEXT, " + COLUMN_UPDATE_NUMBERS + " DOUBLE " + ")";
         db.execSQL(CREATE_PRODUCTS_TABLE);
         Log.d(DEBUG, "onCreate is called");
 
@@ -55,6 +63,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
         values.put(COLUMN_ID, user.get_unique());
         //@todo pw should be encrypted
         values.put(COLUMN_PASSWORD, user.getPassword());
+        values.put(COLUMN_UPDATE_NUMBERS,user.getUpdateNumbers());
         SQLiteDatabase db = this.getWritableDatabase();
 
         db.insert(TABLE_USERS, null, values);
@@ -75,6 +84,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
             user.setID(Integer.parseInt(cursor.getString(0)));
             user.setUsername(cursor.getString(1));
             user.setPassword(cursor.getString(2));
+            user.setUpdateNumbers(cursor.getString(3));
             cursor.close();
         } else {
             user = null;
@@ -98,6 +108,7 @@ public class MyDBHandler extends SQLiteOpenHelper {
             user.setID(Integer.parseInt(cursor.getString(0)));
             user.setUsername(cursor.getString(1));
             user.setPassword(cursor.getString(2));
+            user.setUpdateNumbers(cursor.getString(3));
             cursor.close();
         } else {
             user = null;
